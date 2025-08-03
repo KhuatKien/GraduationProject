@@ -20,6 +20,7 @@
 		<module>config/config-server</module>
 		<module>discovery/discovery-server</module>
 		<module>gateway/api-gateway</module>
+		<module>service/auth-service</module>
 		<module>service/user-service</module>
 		<module>service/tour-service</module>
 		<module>service/booking-service</module>

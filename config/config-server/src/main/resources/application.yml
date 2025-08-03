@@ -8,6 +8,7 @@ spring:
           uri: https://github.com/KhuatKien/GraduationProject_Service_Repo.git
           default-label: main
           search-paths:
+            - auth-service
             - user-service
             - tour-service
 logging:

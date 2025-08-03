@@ -1,0 +1,77 @@
+package com.phenikaa.api_gateway.config;
+
+import com.phenikaa.api_gateway.security.JwtAuthenticationManager;
+import com.phenikaa.api_gateway.security.ServerHttpBearerAuthenticationConverter;
+import com.phenikaa.utils.JwtUtil;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.util.pattern.PathPatternParser;
+
+import java.util.List;
+
+@Configuration
+@EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
+                                                         JwtAuthenticationManager jwtAuthManager,
+                                                         ServerHttpBearerAuthenticationConverter authConverter) {
+
+        AuthenticationWebFilter authenticationWebFilter = new AuthenticationWebFilter(jwtAuthManager);
+        authenticationWebFilter.setServerAuthenticationConverter(authConverter);
+
+        return http
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> {})
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() //cho phép tất cả các options
+                        .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers("/internal/users/**").permitAll()
+                        .pathMatchers("/api/admin/**").hasRole("ADMIN")
+                        .pathMatchers("/api/user/**").hasRole("CUSTOMER")
+//                        .pathMatchers("/api/lecturer/thesis/**").permitAll()
+                        .anyExchange().authenticated()
+                )
+                .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .build();
+    }
+
+    @Bean
+    public JwtAuthenticationManager jwtAuthenticationManager(JwtUtil jwtUtil) {
+        return new JwtAuthenticationManager(jwtUtil);
+    }
+
+    @Bean
+    public ServerHttpBearerAuthenticationConverter bearerAuthenticationConverter() {
+        return new ServerHttpBearerAuthenticationConverter();
+    }
+
+    @Bean
+    @Order(-1)
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
+        source.registerCorsConfiguration("/**", config);
+
+        return new CorsWebFilter(source);
+    }
+
+}

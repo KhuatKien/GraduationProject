@@ -35,12 +35,15 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "full_name", nullable = false)
+    @Column(name = "full_name", columnDefinition = "NVARCHAR(255)", nullable = false)
     private String fullName;
 
     private String avatar;
+
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
+
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String address;
 
     @ManyToMany(fetch = FetchType.EAGER)

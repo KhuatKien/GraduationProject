@@ -1,6 +1,6 @@
 package com.phenikaa.tourService.client;
 
-import com.phenikaa.dto.UserDto;
+import com.phenikaa.dto.response.UserInfoResponse;
 import com.phenikaa.tourService.config.FeignTokenInterceptor;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserServiceClient {
 
     @GetMapping("/{id}")
-    UserDto getUserById(@PathVariable("id") Integer id);
+    UserInfoResponse getUserById(@PathVariable("id") Integer id);
 
 }
