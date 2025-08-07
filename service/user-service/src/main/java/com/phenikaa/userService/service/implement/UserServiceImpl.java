@@ -2,13 +2,11 @@ package com.phenikaa.userService.service.implement;
 
 import com.phenikaa.dto.request.LoginRequest;
 import com.phenikaa.dto.response.UserInfoResponse;
-import com.phenikaa.userService.dto.request.CreateUserRequest;
+import com.phenikaa.userService.dto.request.RegisterRequest;
 import com.phenikaa.userService.entity.User;
 import com.phenikaa.userService.mapper.UserMapper;
 import com.phenikaa.userService.repository.UserRepository;
 import com.phenikaa.userService.service.interfaces.UserService;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,24 +17,21 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    @PersistenceContext
-    private EntityManager entityManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
     @Override
-    public User save(CreateUserRequest createUserRequest) {
-        User user = userMapper.toEntity(createUserRequest, entityManager);
+    public User save(RegisterRequest registerRequest) {
+        User user = userMapper.toEntity(registerRequest);
 
-        if (createUserRequest.getPassword() != null && !createUserRequest.getPassword().isBlank()) {
-            String encodedPassword = passwordEncoder.encode(createUserRequest.getPassword());
+        if (registerRequest.getPassword() != null && !registerRequest.getPassword().isBlank()) {
+            String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
             user.setPassword(encodedPassword);
         } else {
             throw new IllegalArgumentException("Password cannot be empty");
         }
-
-        entityManager.persist(user);
+        userRepository.save(user);
 
         return user;
     }

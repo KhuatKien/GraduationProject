@@ -29,21 +29,22 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "phone_number", unique = true)
+    @Column(name = "phone_number", unique = true, nullable = true)
     private String phoneNumber;
 
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "full_name", columnDefinition = "NVARCHAR(255)", nullable = false)
+    @Column(name = "full_name", columnDefinition = "NVARCHAR(255)", nullable = true)
     private String fullName;
 
+    @Column(name = "avatar", columnDefinition = "NVARCHAR(255)", nullable = true)
     private String avatar;
 
-    @Column(name = "date_of_birth")
+    @Column(name = "date_of_birth", nullable = true)
     private LocalDate dateOfBirth;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
+    @Column(columnDefinition = "NVARCHAR(MAX)", nullable = true)
     private String address;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -65,4 +66,16 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (roles.isEmpty()) {
+            Role role = new Role();
+            role.setRoleName(RoleName.CUSTOMER);
+            roles.add(role);
+        }
+        if (status == null) {
+            status = AccountStatus.ACTIVE;
+        }
+    }
 }

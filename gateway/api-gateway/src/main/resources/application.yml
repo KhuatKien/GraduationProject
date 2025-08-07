@@ -19,12 +19,12 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/api/auth/**, /internal/users/**
+            - Path=/api/auth/**
 
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/users/**, /api/auth/**, /api/admin/**, /internal/users/**
+            - Path=/api/users/**, /api/admin/**, /internal/users/**
 
         - id: tour-service
           uri: lb://tour-service
