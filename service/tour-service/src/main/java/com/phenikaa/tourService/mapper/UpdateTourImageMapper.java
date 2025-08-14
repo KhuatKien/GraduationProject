@@ -19,8 +19,6 @@ public interface UpdateTourImageMapper {
 
     List<TourImage> toEntityList(List<AddTourImageRequest> dtoList);
 
-    List<TourImage> toEntityListFromUpdate(List<UpdateTourImageRequest> dtoList);
-
     void updateEntity(UpdateTourImageRequest dto, @MappingTarget TourImage entity);
 
     /**

@@ -88,4 +88,11 @@ public class TourServiceImpl implements TourService {
                 .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
         return viewTourMapper.toDto(tour);
     }
+
+    @Override
+    public void deleteTour(Integer tourId) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
+        tourRepository.delete(tour);
+    }
  }

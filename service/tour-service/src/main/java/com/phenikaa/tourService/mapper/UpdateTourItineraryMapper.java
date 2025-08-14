@@ -18,7 +18,6 @@ public interface UpdateTourItineraryMapper {
     TourItinerary toEntity(UpdateTourItineraryRequest dto);
 
     List<TourItinerary> toEntityList(List<AddTourItineraryRequest> dtoList);
-    List<TourItinerary> toEntityListFromUpdate(List<UpdateTourItineraryRequest> dtoList);
 
     @Mapping(target = "itineraryId", ignore = true) // Không update ID
     void updateEntity(UpdateTourItineraryRequest dto, @MappingTarget TourItinerary entity);

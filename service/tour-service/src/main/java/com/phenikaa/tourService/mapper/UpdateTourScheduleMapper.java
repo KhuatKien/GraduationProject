@@ -18,7 +18,6 @@ public interface UpdateTourScheduleMapper {
     TourSchedule toEntity(UpdateTourScheduleRequest dto);
 
     List<TourSchedule> toEntityList(List<AddTourScheduleRequest> dtoList);
-    List<TourSchedule> toEntityListFromUpdate(List<UpdateTourScheduleRequest> dtoList);
 
     @Mapping(target = "scheduleId", ignore = true) // Không update ID
     void updateEntity(UpdateTourScheduleRequest dto, @MappingTarget TourSchedule entity);

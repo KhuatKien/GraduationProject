@@ -15,8 +15,8 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 //@CrossOrigin(origins = "*")
-@RequestMapping("/api/admin")
-public class TourController {
+@RequestMapping("/api/tour/admin")
+public class TourAdminController {
     private final TourService tourService;
     private final JwtUtil jwtUtil;
 
@@ -50,6 +50,12 @@ public class TourController {
     public ResponseEntity<ViewTourResponse> viewTour(@PathVariable("id") Integer id) {
         ViewTourResponse tour = tourService.viewTour(id);
         return ResponseEntity.ok(tour);
+    }
+
+    @DeleteMapping("/deleteTour/{id}")
+    public ResponseEntity<String> deleteTour(@PathVariable("id") Integer id) {
+        tourService.deleteTour(id);
+        return ResponseEntity.ok("Tour deleted successfully");
     }
 
 }

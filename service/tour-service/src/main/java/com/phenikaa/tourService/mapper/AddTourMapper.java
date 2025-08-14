@@ -16,9 +16,6 @@ import java.util.List;
         }
 )
 public interface AddTourMapper {
-    @Mapping(source = "categoryId", target = "category.categoryId")
     @Mapping(target = "availableSlots", expression = "java(dto.getAvailableSlots() != null ? dto.getAvailableSlots() : dto.getMaxParticipants())")
     Tour toEntity(AddTourRequest dto);
-
-    List<Tour> toEntityList(List<AddTourRequest> dtoList);
 }
