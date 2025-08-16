@@ -24,12 +24,23 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/users/**, /api/admin/**, /internal/users/**
+            - name: Path
+              args:
+                pattern:
+                  - /api/users/**
+                  - /api/admin/**
+                  - /internal/users/**
 
         - id: tour-service
           uri: lb://tour-service
           predicates:
-            - Path=/api/admin/**, /api/tours/**
+            - name: Path
+              args:
+                pattern:
+                  - /api/tour/**
+                  - /api/category/**
+                  - /internal/tour/**
+
 eureka:
   client:
     service-url:

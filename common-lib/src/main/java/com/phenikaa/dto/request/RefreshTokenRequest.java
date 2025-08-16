@@ -1,4 +1,12 @@
 package com.phenikaa.dto.request;
 
-public record RefreshTokenRequest(String refreshToken) {
+import lombok.*;
+
+@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class RefreshTokenRequest {
+    private String refreshToken;
 }

@@ -17,9 +17,5 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserService userService;
 
-    @PostMapping("/saveUser")
-    public ResponseEntity<User> saveUser(@RequestBody RegisterRequest registerRequest) {
-        User savedUser = userService.save(registerRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
-    }
+
 }

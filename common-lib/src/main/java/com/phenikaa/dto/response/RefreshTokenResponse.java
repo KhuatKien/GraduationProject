@@ -1,4 +1,12 @@
 package com.phenikaa.dto.response;
 
-public class RefreshTokenReponse {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RefreshTokenResponse {
+    private String refreshToken;
 }

@@ -41,8 +41,10 @@ public class SecurityConfig {
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/internal/users/**").permitAll()
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
-                        .pathMatchers("/api/user/**").hasRole("CUSTOMER")
-//                        .pathMatchers("/api/lecturer/thesis/**").permitAll()
+                        .pathMatchers("/api/users/**").hasRole("CUSTOMER")
+                        .pathMatchers("/api/category/admin/**").hasRole("ADMIN")
+                        .pathMatchers("/api/tour/admin/**").hasRole("ADMIN")
+
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

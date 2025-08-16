@@ -1,10 +1,15 @@
 server:
   port: 8084
+
 spring:
   application:
     name: tour-service
   profiles:
     active: dev
+  security:
+    user:
+      name: none
+      password: none
   config:
     import: "configserver:" # Import configuration from the Config Server
 
@@ -18,26 +23,3 @@ spring:
         initial-interval: 1000 # Retry interval in milliseconds
     discovery:
       enabled: true
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    fetch-registry: true
-    register-with-eureka: true
-
-user-service:
-  url: http://localhost:8083/internal/userId
-
-jwt:
-  secret: VHJlbmRvaW5heW5ndW9pZGFuZ2RldHJhbnRyb25nbmFodGFsYW5ndW9pZGFzYW5zYW5nYm90aG9pZ2lhbmRlY2hhbXNvY2JhblRob2lnaWFuY3VhYWljdW5nZGV1ZGFuZ3F1eW5odW5oYWVkZW10aG9pZ2lhbmN1YW5ndW95ZGFuaGNob2JhbmNvbmdnaW9uZ2h1dmllY2RlbWNhdGhlZ2lvaWN1YWJhbnRoYW5jaGlhc2VjdW5nYmFu
-  expiration: 86400000  # 1 ngày (tính bằng milliseconds)
-  refresh-expiration: 604800000
-
-logging:
-  level:
-    org.springframework: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.security: DEBUG
-

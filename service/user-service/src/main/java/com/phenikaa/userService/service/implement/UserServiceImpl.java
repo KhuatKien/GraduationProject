@@ -3,8 +3,12 @@ package com.phenikaa.userService.service.implement;
 import com.phenikaa.dto.request.LoginRequest;
 import com.phenikaa.dto.response.UserInfoResponse;
 import com.phenikaa.userService.dto.request.RegisterRequest;
+import com.phenikaa.userService.entity.AccountStatus;
+import com.phenikaa.userService.entity.Role;
+import com.phenikaa.userService.entity.RoleName;
 import com.phenikaa.userService.entity.User;
 import com.phenikaa.userService.mapper.UserMapper;
+import com.phenikaa.userService.repository.RoleRepository;
 import com.phenikaa.userService.repository.UserRepository;
 import com.phenikaa.userService.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +22,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
     @Override
     public User save(RegisterRequest registerRequest) {
+        Optional<User> userExist = userRepository.findByUserNameOrEmail(registerRequest.getUserName(), registerRequest.getEmail()) ;
+        if (userExist.isPresent()) {
+            throw new IllegalArgumentException("Username or email already exists");
+        }
+
         User user = userMapper.toEntity(registerRequest);
 
         if (registerRequest.getPassword() != null && !registerRequest.getPassword().isBlank()) {
@@ -31,6 +41,19 @@ public class UserServiceImpl implements UserService {
         } else {
             throw new IllegalArgumentException("Password cannot be empty");
         }
+
+        // Gán role mặc định CUSTOMER từ DB
+        Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER)
+                .orElseThrow(() -> new IllegalStateException("Default role CUSTOMER not found. Seed roles first."));
+
+        user.getRoles().clear();
+        user.getRoles().add(customerRole);
+
+        // Có thể đảm bảo trạng thái mặc định nếu cần
+        if (user.getStatus() == null) {
+            user.setStatus(AccountStatus.ACTIVE);
+        }
+
         userRepository.save(user);
 
         return user;

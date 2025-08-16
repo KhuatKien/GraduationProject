@@ -60,13 +60,13 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(String username, Integer userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);
 
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(now)
+                .claim("userId", userId)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();

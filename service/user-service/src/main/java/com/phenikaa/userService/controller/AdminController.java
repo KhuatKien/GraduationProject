@@ -16,10 +16,4 @@ public class AdminController {
 
     private final UserService userService;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/saveUser")
-    public ResponseEntity<User> saveUser(@RequestBody RegisterRequest registerRequest) {
-        User savedUser = userService.save(registerRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
-    }
 }
