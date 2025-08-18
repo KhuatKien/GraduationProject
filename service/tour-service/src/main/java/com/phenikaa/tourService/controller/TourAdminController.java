@@ -42,10 +42,6 @@ public class TourAdminController {
             @RequestHeader("Authorization") String token,
             @ModelAttribute AddTourRequest tour) {
         try {
-            System.out.println("🚀 Received addTour request");
-            System.out.println("📝 Tour title: " + tour.getTitle());
-            System.out.println("🖼️  Number of images: " + (tour.getImages() != null ? tour.getImages().size() : 0));
-
             if (tour.getImages() != null) {
                 for (int i = 0; i < tour.getImages().size(); i++) {
                     var img = tour.getImages().get(i);
@@ -58,11 +54,8 @@ public class TourAdminController {
             }
 
             Integer userId = jwtUtil.extractUserId(token);
-            System.out.println("👤 User ID from token: " + userId);
 
             Tour createdTour = tourService.addTour(userId, tour);
-
-            System.out.println("✅ Tour created successfully with ID: " + createdTour.getTourId());
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -70,13 +63,11 @@ public class TourAdminController {
                     "tourId", createdTour.getTourId(),
                     "data", createdTour));
         } catch (IOException e) {
-            System.err.println("❌ Image upload error: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "Lỗi khi upload ảnh: " + e.getMessage()));
         } catch (Exception e) {
-            System.err.println("❌ General error creating tour: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,

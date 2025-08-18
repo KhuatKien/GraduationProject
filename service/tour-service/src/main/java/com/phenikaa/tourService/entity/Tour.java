@@ -16,7 +16,7 @@ import java.util.List;
 @Setter
 @ToString
 @Builder
-public class Tour {
+public class  Tour {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tour_id", nullable = false, updatable = false)
@@ -47,9 +47,6 @@ public class Tour {
 
     @Column(name = "max_participants")
     private Integer maxParticipants;
-
-    @Column(name = "available_slots")
-    private Integer availableSlots;
 
     @Enumerated(EnumType.STRING)
     private TourStatus status; // ACTIVE, INACTIVE, FULL, CANCELLED
@@ -95,13 +92,4 @@ public class Tour {
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<TourSchedule> schedules;
-//
-//    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-//    private List<Booking> bookings;
-//
-//    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-//    private List<Review> reviews;
-//
-//    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-//    private List<Wishlist> wishlists;
 }

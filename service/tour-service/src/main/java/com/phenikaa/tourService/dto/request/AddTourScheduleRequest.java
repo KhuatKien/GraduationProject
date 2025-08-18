@@ -16,6 +16,5 @@ public class AddTourScheduleRequest {
     private LocalDate departureDate;
     private LocalDate returnDate;
     private Double specialPrice;
-    private Integer availableSlots;
     private ScheduleStatus status;
 }

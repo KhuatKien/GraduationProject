@@ -56,28 +56,20 @@ public class TourServiceImpl implements TourService {
         if (dto.getImages() != null && !dto.getImages().isEmpty()) {
             String folderName = "tours/" + dto.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
 
-            System.out
-                    .println("📁 Uploading " + dto.getImages().size() + " images to Cloudinary folder: " + folderName);
-
             for (int i = 0; i < dto.getImages().size(); i++) {
                 AddTourImageRequest imageRequest = dto.getImages().get(i);
                 if (imageRequest.getImageFile() != null && !imageRequest.getImageFile().isEmpty()) {
                     try {
-                        System.out.println("📤 Uploading image " + (i + 1) + ": "
-                                + imageRequest.getImageFile().getOriginalFilename());
-
                         // Upload ảnh lên Cloudinary và cập nhật imageUrl trong DTO
                         String imageUrl = cloudinaryService.uploadImage(imageRequest.getImageFile(), folderName);
                         imageRequest.setImageUrl(imageUrl);
 
-                        System.out.println("✅ Image uploaded successfully: " + imageUrl);
                     } catch (IOException e) {
-                        System.err.println("❌ Failed to upload image " + (i + 1) + ": " + e.getMessage());
                         throw new IOException(
                                 "Failed to upload image: " + imageRequest.getImageFile().getOriginalFilename(), e);
                     }
                 } else {
-                    System.out.println("⚠️  Skipping empty image at index " + i);
+                    System.out.println("Skipping empty image at index " + i);
                 }
             }
         }
@@ -94,14 +86,14 @@ public class TourServiceImpl implements TourService {
             tour.getItineraries().forEach(itinerary -> itinerary.setTour(tour));
         }
         if (tour.getSchedules() != null) {
-            tour.getSchedules().forEach(schedule -> schedule.setTour(tour));
+            tour.getSchedules().forEach(schedule -> {
+                schedule.setTour(tour);
+                // Tự động set availableSlots = maxParticipants của tour
+                schedule.setAvailableSlots(tour.getMaxParticipants());
+            });
         }
 
-        System.out.println("💾 Saving tour to database with " + (tour.getImages() != null ? tour.getImages().size() : 0)
-                + " images");
         Tour savedTour = tourRepository.save(tour);
-        System.out.println("✅ Tour saved successfully with ID: " + savedTour.getTourId());
-
         return savedTour;
     }
 
@@ -131,6 +123,16 @@ public class TourServiceImpl implements TourService {
     public void deleteTour(Integer tourId) {
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
+
+        try {
+            // Xóa folder Cloudinary của tour này trước khi xóa database
+            String folderName = "tours/" + tour.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
+            cloudinaryService.deleteFolder(folderName);
+        } catch (IOException e) {
+            System.err.println("Warning: Failed to delete Cloudinary folder for tour " + tourId + ": " + e.getMessage());
+        }
+
+        // Xóa tour từ database (cascade sẽ xóa images, schedules, itineraries)
         tourRepository.delete(tour);
     }
 }

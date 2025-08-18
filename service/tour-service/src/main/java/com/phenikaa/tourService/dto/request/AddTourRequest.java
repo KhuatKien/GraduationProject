@@ -25,8 +25,6 @@ public class AddTourRequest {
 
     private Integer maxParticipants;
 
-    private Integer availableSlots;
-
     private TourStatus status;
 
     private Boolean featured;

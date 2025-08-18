@@ -24,10 +24,6 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             throw new IOException("File is null or empty");
         }
 
-        System.out.println("🔄 Starting Cloudinary upload for file: " + file.getOriginalFilename());
-        System.out.println("📁 Target folder: " + folderName);
-        System.out.println("📏 File size: " + file.getSize() + " bytes");
-
         try {
             Map<String, Object> options = ObjectUtils.asMap(
                     "folder", folderName,
@@ -40,13 +36,8 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             String url = uploadResult.get("url").toString();
             String publicId = uploadResult.get("public_id").toString();
 
-            System.out.println("✅ Upload successful!");
-            System.out.println("🔗 URL: " + url);
-            System.out.println("🆔 Public ID: " + publicId);
-
             return url;
         } catch (Exception e) {
-            System.err.println("❌ Cloudinary upload failed: " + e.getMessage());
             e.printStackTrace();
             throw new IOException("Failed to upload image to Cloudinary: " + e.getMessage(), e);
         }
@@ -54,7 +45,46 @@ public class CloudinaryServiceImpl implements CloudinaryService {
 
     @Override
     public void deleteImage(String publicId) throws IOException {
-        cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+        try {
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+        } catch (Exception e) {
+            throw new IOException("Failed to delete image from Cloudinary: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void deleteFolder(String folderName) throws IOException {
+        try {
+            // Delete all images in the folder first
+            Map<String, Object> searchOptions = ObjectUtils.asMap(
+                    "type", "upload",
+                    "prefix", folderName + "/",
+                    "max_results", 500);
+
+            // Get all resources in the folder
+            Map<String, Object> searchResult = cloudinary.search()
+                    .expression("folder:" + folderName)
+                    .execute();
+
+            if (searchResult.get("resources") != null) {
+                Object[] resources = (Object[]) searchResult.get("resources");
+
+                // Delete each image
+                for (Object resource : resources) {
+                    Map<String, Object> resourceMap = (Map<String, Object>) resource;
+                    String publicId = (String) resourceMap.get("public_id");
+                    if (publicId != null) {
+                        deleteImage(publicId);
+                    }
+                }
+            }
+
+            // Delete the folder itself
+            cloudinary.api().deleteFolder(folderName, ObjectUtils.emptyMap());
+
+        } catch (Exception e) {
+            throw new IOException("Failed to delete folder from Cloudinary: " + e.getMessage(), e);
+        }
     }
 
     @Override
