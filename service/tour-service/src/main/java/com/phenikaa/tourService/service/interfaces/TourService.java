@@ -5,12 +5,13 @@ import com.phenikaa.tourService.dto.request.UpdateTourRequest;
 import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.entity.Tour;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface TourService {
     List<ViewTourResponse> getAllTours();
     List<ViewTourResponse> searchToursByKeywordAndFilter(String keyword, String filterBy);
-    Tour addTour(Integer userId, AddTourRequest tour);
+    Tour addTour(Integer userId, AddTourRequest tour) throws IOException;
     Tour updateTour(UpdateTourRequest tour);
     ViewTourResponse viewTour(Integer tourId);
     void deleteTour(Integer tourId);

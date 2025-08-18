@@ -5,17 +5,12 @@ import com.phenikaa.tourService.entity.Tour;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
-
-@Mapper(
-        componentModel = "spring",
-        uses = {
+@Mapper(componentModel = "spring", uses = {
                 AddTourImageMapper.class,
                 AddTourItineraryMapper.class,
                 AddTourScheduleMapper.class
-        }
-)
+})
 public interface AddTourMapper {
-    @Mapping(target = "availableSlots", expression = "java(dto.getAvailableSlots() != null ? dto.getAvailableSlots() : dto.getMaxParticipants())")
-    Tour toEntity(AddTourRequest dto);
+        @Mapping(target = "availableSlots", expression = "java(dto.getAvailableSlots() != null ? dto.getAvailableSlots() : dto.getMaxParticipants())")
+        Tour toEntity(AddTourRequest dto);
 }
