@@ -4,9 +4,8 @@ import com.phenikaa.tourService.dto.request.*;
 import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.entity.Tour;
 import com.phenikaa.tourService.entity.TourImage;
-import com.phenikaa.tourService.entity.TourItinerary;
-import com.phenikaa.tourService.entity.TourSchedule;
 import com.phenikaa.tourService.mapper.*;
+import com.phenikaa.tourService.repository.CategoryRepository;
 import com.phenikaa.tourService.repository.TourRepository;
 import com.phenikaa.tourService.service.interfaces.CloudinaryService;
 import com.phenikaa.tourService.service.interfaces.TourService;
@@ -16,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +30,7 @@ public class TourServiceImpl implements TourService {
     private final UpdateTourScheduleMapper updateTourScheduleMapper;
     private final ViewTourMapper viewTourMapper;
     private final CloudinaryService cloudinaryService;
+    private final CategoryRepository categoryRepository;
 
     @Override
     public List<ViewTourResponse> getAllTours() {
@@ -77,6 +76,8 @@ public class TourServiceImpl implements TourService {
         // Sử dụng mapper để tạo tour entity (bao gồm cả images đã có URL)
         Tour tour = addTourMapper.toEntity(dto);
         tour.setCreateBy(userId);
+        tour.setCategory(categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + dto.getCategoryId())));
 
         // Gán quan hệ 2 chiều (nếu cần)
         if (tour.getImages() != null) {
@@ -125,14 +126,39 @@ public class TourServiceImpl implements TourService {
                 .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
 
         try {
-            // Xóa folder Cloudinary của tour này trước khi xóa database
-            String folderName = "tours/" + tour.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
-            cloudinaryService.deleteFolder(folderName);
-        } catch (IOException e) {
-            System.err.println("Warning: Failed to delete Cloudinary folder for tour " + tourId + ": " + e.getMessage());
+            // Xóa từng image trong Cloudinary trước (an toàn hơn)
+            if (tour.getImages() != null && !tour.getImages().isEmpty()) {
+                for (TourImage image : tour.getImages()) {
+                    if (image.getImageUrl() != null && !image.getImageUrl().isEmpty()) {
+                        try {
+                            // Extract public ID từ URL và xóa
+                            String publicId = cloudinaryService.extractPublicIdFromUrl(image.getImageUrl());
+                            cloudinaryService.deleteImage(publicId);
+                            System.out.println("Deleted image from Cloudinary: " + publicId);
+                        } catch (Exception e) {
+                            System.err.println("Failed to delete individual image: " + image.getImageUrl() + " - " + e.getMessage());
+                        }
+                    }
+                }
+            }
+
+            // Xóa folder sau cùng (chỉ để cleanup)
+            try {
+                String folderName = "tours/" + tour.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
+                cloudinaryService.deleteFolder(folderName);
+                System.out.println("Deleted Cloudinary folder: " + folderName);
+            } catch (Exception folderException) {
+                System.out.println("Note: Folder deletion skipped (may be already empty): " + folderException.getMessage());
+                // Không cần throw exception vì images đã được xóa
+            }
+
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to delete Cloudinary resources for tour " + tourId + ": " + e.getMessage());
+            // Vẫn tiếp tục xóa database ngay cả khi Cloudinary fail
         }
 
         // Xóa tour từ database (cascade sẽ xóa images, schedules, itineraries)
         tourRepository.delete(tour);
+        System.out.println("Deleted tour from database: " + tourId);
     }
 }

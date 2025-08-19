@@ -11,6 +11,10 @@ import org.mapstruct.Mapping;
                 AddTourScheduleMapper.class
 })
 public interface AddTourMapper {
-        @Mapping(target = "availableSlots", expression = "java(dto.getAvailableSlots() != null ? dto.getAvailableSlots() : dto.getMaxParticipants())")
+        @Mapping(target = "category", ignore = true)
+        @Mapping(target = "tourId", ignore = true)
+        @Mapping(target = "createBy", ignore = true)
+        @Mapping(target = "createdAt", ignore = true)
+        @Mapping(target = "updatedAt", ignore = true)
         Tour toEntity(AddTourRequest dto);
 }

@@ -55,32 +55,30 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     @Override
     public void deleteFolder(String folderName) throws IOException {
         try {
-            // Delete all images in the folder first
-            Map<String, Object> searchOptions = ObjectUtils.asMap(
-                    "type", "upload",
-                    "prefix", folderName + "/",
-                    "max_results", 500);
-
             // Get all resources in the folder
             Map<String, Object> searchResult = cloudinary.search()
                     .expression("folder:" + folderName)
+                    .maxResults(500)
                     .execute();
 
             if (searchResult.get("resources") != null) {
-                Object[] resources = (Object[]) searchResult.get("resources");
+                // Fix casting issue: resources là ArrayList, không phải Object[]
+                @SuppressWarnings("unchecked")
+                java.util.List<Map<String, Object>> resources = (java.util.List<Map<String, Object>>) searchResult.get("resources");
 
                 // Delete each image
-                for (Object resource : resources) {
-                    Map<String, Object> resourceMap = (Map<String, Object>) resource;
-                    String publicId = (String) resourceMap.get("public_id");
+                for (Map<String, Object> resource : resources) {
+                    String publicId = (String) resource.get("public_id");
                     if (publicId != null) {
                         deleteImage(publicId);
+                        System.out.println("Deleted resource from folder: " + publicId);
                     }
                 }
             }
 
-            // Delete the folder itself
+            // Delete the folder itself (chỉ khi folder rỗng)
             cloudinary.api().deleteFolder(folderName, ObjectUtils.emptyMap());
+            System.out.println("Deleted folder: " + folderName);
 
         } catch (Exception e) {
             throw new IOException("Failed to delete folder from Cloudinary: " + e.getMessage(), e);
