@@ -64,7 +64,8 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             if (searchResult.get("resources") != null) {
                 // Fix casting issue: resources là ArrayList, không phải Object[]
                 @SuppressWarnings("unchecked")
-                java.util.List<Map<String, Object>> resources = (java.util.List<Map<String, Object>>) searchResult.get("resources");
+                java.util.List<Map<String, Object>> resources = (java.util.List<Map<String, Object>>) searchResult
+                        .get("resources");
 
                 // Delete each image
                 for (Map<String, Object> resource : resources) {
@@ -92,9 +93,45 @@ public class CloudinaryServiceImpl implements CloudinaryService {
 
     @Override
     public String extractPublicIdFromUrl(String imageUrl) {
-        // Extract public ID from Cloudinary URL
-        String[] parts = imageUrl.split("/");
-        String fileName = parts[parts.length - 1];
-        return fileName.substring(0, fileName.lastIndexOf("."));
+        // Extract public ID from Cloudinary URL including folder path
+        // Example:
+        // https://res.cloudinary.com/<cloud>/image/upload/v1700000000/tours/f1/f2/name.jpg
+        // public_id => tours/f1/f2/name
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return null;
+        }
+
+        final String uploadMarker = "/upload/";
+        int markerIndex = imageUrl.indexOf(uploadMarker);
+        if (markerIndex == -1) {
+            // Fallback: use last segment without extension
+            String[] parts = imageUrl.split("/");
+            String fileName = parts[parts.length - 1];
+            int dotIndex = fileName.lastIndexOf('.');
+            return dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName;
+        }
+
+        String path = imageUrl.substring(markerIndex + uploadMarker.length());
+        int queryIdx = path.indexOf('?');
+        if (queryIdx != -1) {
+            path = path.substring(0, queryIdx);
+        }
+        // Strip version segment like v1700000000/
+        if (path.startsWith("v")) {
+            int slashIdx = path.indexOf('/');
+            if (slashIdx > 1) {
+                boolean digits = path.substring(1, slashIdx).chars().allMatch(Character::isDigit);
+                if (digits) {
+                    path = path.substring(slashIdx + 1);
+                }
+            }
+        }
+        // Remove extension
+        int lastSlash = path.lastIndexOf('/');
+        int lastDot = path.lastIndexOf('.');
+        if (lastDot > lastSlash) {
+            path = path.substring(0, lastDot);
+        }
+        return path;
     }
 }

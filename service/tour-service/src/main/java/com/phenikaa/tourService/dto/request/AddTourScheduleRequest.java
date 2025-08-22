@@ -5,16 +5,28 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Future;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddTourScheduleRequest {
-    private LocalDate departureDate;
-    private LocalDate returnDate;
+    @NotNull(message = "Departure date is required")
+    @Future(message = "Departure date must be in the future")
+    private Instant departureDate;
+
+    @NotNull(message = "Return date is required")
+    @Future(message = "Return date must be in the future")
+    private Instant returnDate;
+
     private Double specialPrice;
+
+    @NotNull(message = "Available slots is required")
+    private Integer availableSlots;
+
     private ScheduleStatus status;
 }

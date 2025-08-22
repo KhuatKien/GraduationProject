@@ -4,6 +4,8 @@ import com.phenikaa.tourService.dto.request.*;
 import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.entity.Tour;
 import com.phenikaa.tourService.entity.TourImage;
+import com.phenikaa.tourService.entity.TourItinerary;
+import com.phenikaa.tourService.entity.TourSchedule;
 import com.phenikaa.tourService.mapper.*;
 import com.phenikaa.tourService.repository.CategoryRepository;
 import com.phenikaa.tourService.repository.TourRepository;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,24 +37,18 @@ public class TourServiceImpl implements TourService {
 
     @Override
     public List<ViewTourResponse> getAllTours() {
-        List<Tour> tours = tourRepository.findAll(); // Lấy tất cả các tour từ database
-        return tours.stream()
-                .map(viewTourMapper::toDto) // Chuyển đổi từ entity sang DTO
-                .collect(Collectors.toList()); // Trả về danh sách DTO
+        List<Tour> tours = tourRepository.findAll();
+        return tours.stream().map(viewTourMapper::toDto).collect(Collectors.toList());
     }
 
     @Override
     public List<ViewTourResponse> searchToursByKeywordAndFilter(String keyword, String filterBy) {
-        // Sử dụng phương thức tìm kiếm với filter trong repository
         List<Tour> tours = tourRepository.searchByKeywordAndFilter(keyword, filterBy);
-        return tours.stream()
-                .map(viewTourMapper::toDto)
-                .collect(Collectors.toList());
+        return tours.stream().map(viewTourMapper::toDto).collect(Collectors.toList());
     }
 
     @Override
     public Tour addTour(Integer userId, AddTourRequest dto) throws IOException {
-        // Xử lý upload ảnh lên Cloudinary trước
         if (dto.getImages() != null && !dto.getImages().isEmpty()) {
             String folderName = "tours/" + dto.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
 
@@ -59,27 +56,21 @@ public class TourServiceImpl implements TourService {
                 AddTourImageRequest imageRequest = dto.getImages().get(i);
                 if (imageRequest.getImageFile() != null && !imageRequest.getImageFile().isEmpty()) {
                     try {
-                        // Upload ảnh lên Cloudinary và cập nhật imageUrl trong DTO
                         String imageUrl = cloudinaryService.uploadImage(imageRequest.getImageFile(), folderName);
                         imageRequest.setImageUrl(imageUrl);
-
                     } catch (IOException e) {
                         throw new IOException(
                                 "Failed to upload image: " + imageRequest.getImageFile().getOriginalFilename(), e);
                     }
-                } else {
-                    System.out.println("Skipping empty image at index " + i);
                 }
             }
         }
 
-        // Sử dụng mapper để tạo tour entity (bao gồm cả images đã có URL)
         Tour tour = addTourMapper.toEntity(dto);
         tour.setCreateBy(userId);
         tour.setCategory(categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + dto.getCategoryId())));
 
-        // Gán quan hệ 2 chiều (nếu cần)
         if (tour.getImages() != null) {
             tour.getImages().forEach(image -> image.setTour(tour));
         }
@@ -89,13 +80,12 @@ public class TourServiceImpl implements TourService {
         if (tour.getSchedules() != null) {
             tour.getSchedules().forEach(schedule -> {
                 schedule.setTour(tour);
-                // Tự động set availableSlots = maxParticipants của tour
-                schedule.setAvailableSlots(tour.getMaxParticipants());
+                // availableSlots now comes from the request, no need to set from
+                // maxParticipants
             });
         }
 
-        Tour savedTour = tourRepository.save(tour);
-        return savedTour;
+        return tourRepository.save(tour);
     }
 
     @Override
@@ -103,13 +93,224 @@ public class TourServiceImpl implements TourService {
         Tour existingTour = tourRepository.findById(request.getTourId())
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
 
-        // Sử dụng method mới để cập nhật với xử lý collections thông minh
         updateTourMapper.updateTourWithCollections(request, existingTour,
-                updateTourImageMapper,
-                updateTourItineraryMapper,
-                updateTourScheduleMapper);
+                updateTourImageMapper, updateTourItineraryMapper, updateTourScheduleMapper);
 
         return tourRepository.save(existingTour);
+    }
+
+    @Override
+    public Tour updateTourWithFiles(Integer tourId, Integer userId, UpdateTourRequest dto) throws IOException {
+        Tour existingTour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
+
+        existingTour.setTitle(dto.getTitle());
+        existingTour.setDescription(dto.getDescription());
+        existingTour.setHighlights(dto.getHighlights());
+        existingTour.setAdultPrice(dto.getAdultPrice());
+        existingTour.setChildPrice(dto.getChildPrice());
+        existingTour.setDuration(dto.getDuration());
+        existingTour.setDeparture(dto.getDeparture());
+        existingTour.setDestination(dto.getDestination());
+        existingTour.setStatus(dto.getStatus());
+        existingTour.setFeatured(dto.getFeatured());
+        existingTour.setIsHot(dto.getIsHot());
+        existingTour.setHasPromotion(dto.getHasPromotion());
+        existingTour.setIncludes(dto.getIncludes());
+        existingTour.setExcludes(dto.getExcludes());
+        existingTour.setTerms(dto.getTerms());
+
+        if (dto.getCategoryId() != null) {
+            existingTour.setCategory(categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("Category not found with ID: " + dto.getCategoryId())));
+        }
+
+        updateTourImages(existingTour, dto.getImages());
+        updateTourSchedules(existingTour, dto.getSchedules());
+        updateTourItineraries(existingTour, dto.getItineraries());
+
+        Tour savedTour = tourRepository.save(existingTour);
+        System.out.println("✅ Tour updated successfully with ID: " + tourId);
+        return savedTour;
+    }
+
+    private void updateTourImages(Tour existingTour, List<UpdateTourImageRequest> newImageDtos) throws IOException {
+        if (newImageDtos == null) {
+            newImageDtos = new ArrayList<>();
+        }
+
+        String folderName = "tours/" + existingTour.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
+        List<TourImage> currentImages = new ArrayList<>(existingTour.getImages());
+        List<TourImage> updatedImages = new ArrayList<>();
+
+        for (UpdateTourImageRequest imageDto : newImageDtos) {
+            TourImage imageToKeep = null;
+
+            if (imageDto.getImageId() != null) {
+                imageToKeep = currentImages.stream()
+                        .filter(img -> imageDto.getImageId().equals(img.getImageId()))
+                        .findFirst().orElse(null);
+            }
+
+            if (imageToKeep == null && imageDto.getImageUrl() != null && !imageDto.getImageUrl().isEmpty()) {
+                imageToKeep = currentImages.stream()
+                        .filter(img -> img.getImageUrl().equals(imageDto.getImageUrl()))
+                        .findFirst().orElse(null);
+            }
+
+            if (imageToKeep != null) {
+                imageToKeep.setCaption(imageDto.getCaption() != null ? imageDto.getCaption() : "");
+                imageToKeep.setIsPrimary(imageDto.getIsPrimary() != null ? imageDto.getIsPrimary() : false);
+                imageToKeep.setSortOrder(imageDto.getSortOrder() != null ? imageDto.getSortOrder() : 0);
+                updatedImages.add(imageToKeep);
+                currentImages.remove(imageToKeep);
+                System.out.println("✅ Updated existing image metadata: " + imageToKeep.getImageUrl());
+
+            } else if (imageDto.getImageFile() != null && !imageDto.getImageFile().isEmpty()) {
+                try {
+                    String imageUrl = cloudinaryService.uploadImage(imageDto.getImageFile(), folderName);
+                    TourImage newImage = TourImage.builder()
+                            .imageUrl(imageUrl)
+                            .caption(imageDto.getCaption() != null ? imageDto.getCaption() : "")
+                            .isPrimary(imageDto.getIsPrimary() != null ? imageDto.getIsPrimary() : false)
+                            .sortOrder(imageDto.getSortOrder() != null ? imageDto.getSortOrder() : 0)
+                            .tour(existingTour)
+                            .build();
+                    updatedImages.add(newImage);
+                    System.out.println("✅ Added new image: " + imageUrl);
+                } catch (IOException e) {
+                    throw new IOException(
+                            "Failed to upload new image: " + imageDto.getImageFile().getOriginalFilename(), e);
+                }
+            }
+        }
+
+        for (TourImage deletedImage : currentImages) {
+            try {
+                String publicId = cloudinaryService.extractPublicIdFromUrl(deletedImage.getImageUrl());
+                cloudinaryService.deleteImage(publicId);
+                System.out.println("🗑️ Deleted image from Cloudinary: " + publicId);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to delete image from Cloudinary: " + deletedImage.getImageUrl()
+                        + " - " + e.getMessage());
+            }
+        }
+
+        existingTour.getImages().clear();
+        existingTour.getImages().addAll(updatedImages);
+    }
+
+    private void updateTourSchedules(Tour existingTour, List<UpdateTourScheduleRequest> newScheduleDtos) {
+        if (newScheduleDtos == null) {
+            newScheduleDtos = new ArrayList<>();
+        }
+
+        List<TourSchedule> currentSchedules = new ArrayList<>(existingTour.getSchedules());
+        List<TourSchedule> updatedSchedules = new ArrayList<>();
+
+        for (UpdateTourScheduleRequest scheduleDto : newScheduleDtos) {
+            TourSchedule existingSchedule = null;
+
+            if (scheduleDto.getScheduleId() != null) {
+                existingSchedule = currentSchedules.stream()
+                        .filter(s -> scheduleDto.getScheduleId().equals(s.getScheduleId()))
+                        .findFirst().orElse(null);
+            }
+
+            if (existingSchedule == null) {
+                existingSchedule = currentSchedules.stream()
+                        .filter(schedule -> schedule.getDepartureDate().equals(scheduleDto.getDepartureDate())
+                                && schedule.getReturnDate().equals(scheduleDto.getReturnDate()))
+                        .findFirst().orElse(null);
+            }
+
+            if (existingSchedule != null) {
+                existingSchedule.setSpecialPrice(scheduleDto.getSpecialPrice());
+                existingSchedule.setStatus(scheduleDto.getStatus());
+                updatedSchedules.add(existingSchedule);
+                currentSchedules.remove(existingSchedule);
+                System.out.println("✅ Updated existing schedule: " + scheduleDto.getDepartureDate() + " -> "
+                        + scheduleDto.getReturnDate());
+
+            } else {
+                TourSchedule newSchedule = new TourSchedule();
+                newSchedule.setDepartureDate(scheduleDto.getDepartureDate());
+                newSchedule.setReturnDate(scheduleDto.getReturnDate());
+                newSchedule.setSpecialPrice(scheduleDto.getSpecialPrice());
+                newSchedule.setStatus(scheduleDto.getStatus());
+                newSchedule.setAvailableSlots(scheduleDto.getAvailableSlots()); // Get from request instead of
+                                                                                // maxParticipants
+                newSchedule.setTour(existingTour);
+                updatedSchedules.add(newSchedule);
+                System.out.println("✅ Added new schedule: " + scheduleDto.getDepartureDate() + " -> "
+                        + scheduleDto.getReturnDate());
+            }
+        }
+
+        for (TourSchedule deletedSchedule : currentSchedules) {
+            System.out.println("🗑️ Removed schedule: " + deletedSchedule.getDepartureDate() + " -> "
+                    + deletedSchedule.getReturnDate());
+        }
+
+        existingTour.getSchedules().clear();
+        existingTour.getSchedules().addAll(updatedSchedules);
+    }
+
+    private void updateTourItineraries(Tour existingTour, List<UpdateTourItineraryRequest> newItineraryDtos) {
+        if (newItineraryDtos == null) {
+            newItineraryDtos = new ArrayList<>();
+        }
+
+        List<TourItinerary> currentItineraries = new ArrayList<>(existingTour.getItineraries());
+        List<TourItinerary> updatedItineraries = new ArrayList<>();
+
+        for (UpdateTourItineraryRequest itineraryDto : newItineraryDtos) {
+            TourItinerary existingItinerary = null;
+
+            if (itineraryDto.getItineraryId() != null) {
+                existingItinerary = currentItineraries.stream()
+                        .filter(i -> itineraryDto.getItineraryId().equals(i.getItineraryId()))
+                        .findFirst().orElse(null);
+            }
+
+            if (existingItinerary == null) {
+                existingItinerary = currentItineraries.stream()
+                        .filter(itinerary -> itinerary.getDayNumber().equals(itineraryDto.getDayNumber()))
+                        .findFirst().orElse(null);
+            }
+
+            if (existingItinerary != null) {
+                existingItinerary.setTitle(itineraryDto.getTitle());
+                existingItinerary.setDescription(itineraryDto.getDescription());
+                existingItinerary.setActivities(itineraryDto.getActivities());
+                existingItinerary.setMeals(itineraryDto.getMeals());
+                existingItinerary.setAccommodation(itineraryDto.getAccommodation());
+                updatedItineraries.add(existingItinerary);
+                currentItineraries.remove(existingItinerary);
+                System.out.println("✅ Updated existing itinerary for Day " + itineraryDto.getDayNumber());
+
+            } else {
+                TourItinerary newItinerary = new TourItinerary();
+                newItinerary.setDayNumber(itineraryDto.getDayNumber());
+                newItinerary.setTitle(itineraryDto.getTitle());
+                newItinerary.setDescription(itineraryDto.getDescription());
+                newItinerary.setActivities(itineraryDto.getActivities());
+                newItinerary.setMeals(itineraryDto.getMeals());
+                newItinerary.setAccommodation(itineraryDto.getAccommodation());
+                newItinerary.setTour(existingTour);
+                updatedItineraries.add(newItinerary);
+                System.out.println("✅ Added new itinerary for Day " + itineraryDto.getDayNumber());
+            }
+        }
+
+        for (TourItinerary deletedItinerary : currentItineraries) {
+            System.out.println("🗑️ Removed itinerary for Day " + deletedItinerary.getDayNumber());
+        }
+
+        existingTour.getItineraries().clear();
+        updatedItineraries.sort((a, b) -> Integer.compare(a.getDayNumber(), b.getDayNumber()));
+        existingTour.getItineraries().addAll(updatedItineraries);
     }
 
     @Override
@@ -126,38 +327,35 @@ public class TourServiceImpl implements TourService {
                 .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
 
         try {
-            // Xóa từng image trong Cloudinary trước (an toàn hơn)
             if (tour.getImages() != null && !tour.getImages().isEmpty()) {
                 for (TourImage image : tour.getImages()) {
                     if (image.getImageUrl() != null && !image.getImageUrl().isEmpty()) {
                         try {
-                            // Extract public ID từ URL và xóa
                             String publicId = cloudinaryService.extractPublicIdFromUrl(image.getImageUrl());
                             cloudinaryService.deleteImage(publicId);
                             System.out.println("Deleted image from Cloudinary: " + publicId);
                         } catch (Exception e) {
-                            System.err.println("Failed to delete individual image: " + image.getImageUrl() + " - " + e.getMessage());
+                            System.err.println("Failed to delete individual image: " + image.getImageUrl() + " - "
+                                    + e.getMessage());
                         }
                     }
                 }
             }
 
-            // Xóa folder sau cùng (chỉ để cleanup)
             try {
                 String folderName = "tours/" + tour.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
                 cloudinaryService.deleteFolder(folderName);
                 System.out.println("Deleted Cloudinary folder: " + folderName);
             } catch (Exception folderException) {
-                System.out.println("Note: Folder deletion skipped (may be already empty): " + folderException.getMessage());
-                // Không cần throw exception vì images đã được xóa
+                System.out.println(
+                        "Note: Folder deletion skipped (may be already empty): " + folderException.getMessage());
             }
 
         } catch (Exception e) {
-            System.err.println("Warning: Failed to delete Cloudinary resources for tour " + tourId + ": " + e.getMessage());
-            // Vẫn tiếp tục xóa database ngay cả khi Cloudinary fail
+            System.err.println(
+                    "Warning: Failed to delete Cloudinary resources for tour " + tourId + ": " + e.getMessage());
         }
 
-        // Xóa tour từ database (cascade sẽ xóa images, schedules, itineraries)
         tourRepository.delete(tour);
         System.out.println("Deleted tour from database: " + tourId);
     }

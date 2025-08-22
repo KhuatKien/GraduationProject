@@ -25,7 +25,8 @@ public interface UpdateTourItineraryMapper {
     /**
      * Xử lý cập nhật, xóa và thêm mới itineraries
      */
-    default void updateItineraryCollection(List<UpdateTourItineraryRequest> dtoList, List<TourItinerary> existingItineraries) {
+    default void updateItineraryCollection(List<UpdateTourItineraryRequest> dtoList,
+            List<TourItinerary> existingItineraries) {
         if (dtoList == null) {
             existingItineraries.clear();
             return;
@@ -37,9 +38,8 @@ public interface UpdateTourItineraryMapper {
                 .collect(Collectors.toMap(UpdateTourItineraryRequest::getItineraryId, dto -> dto));
 
         // Xóa các itineraries không còn trong danh sách update
-        existingItineraries.removeIf(existing ->
-                existing.getItineraryId() != null && !dtoMap.containsKey(existing.getItineraryId())
-        );
+        existingItineraries.removeIf(
+                existing -> existing.getItineraryId() != null && !dtoMap.containsKey(existing.getItineraryId()));
 
         // Cập nhật các itineraries có ID
         for (TourItinerary existingItinerary : existingItineraries) {

@@ -22,7 +22,6 @@ public class UpdateTourRequest {
     private Integer duration;
     private String departure;
     private String destination;
-    private Integer maxParticipants;
     private Integer availableSlots;
     private TourStatus status;
     private Boolean featured;

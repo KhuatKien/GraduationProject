@@ -23,8 +23,6 @@ public class AddTourRequest {
 
     private String destination;
 
-    private Integer maxParticipants;
-
     private TourStatus status;
 
     private Boolean featured;

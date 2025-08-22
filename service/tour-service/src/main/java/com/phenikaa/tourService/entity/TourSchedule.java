@@ -3,7 +3,7 @@ package com.phenikaa.tourService.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Entity
 @Table(name = "tour_schedules")
@@ -19,12 +19,12 @@ public class TourSchedule {
     private Integer scheduleId;
 
     @Column(name = "departure_date", nullable = false)
-    private LocalDate departureDate;
+    private Instant departureDate;
 
     @Column(name = "return_date", nullable = false)
-    private LocalDate returnDate;
+    private Instant returnDate;
 
-    @Column(name = "departure_time", nullable = false)
+    @Column(name = "special_price", nullable = false)
     private Double specialPrice; // giá đặc biệt cho lịch trình này
 
     @Column(name = "available_slot", nullable = false)
@@ -37,6 +37,6 @@ public class TourSchedule {
     @JoinColumn(name = "tour_id")
     private Tour tour;
 
-//    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
-//    private List<Booking> bookings;
+    // @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
+    // private List<Booking> bookings;
 }

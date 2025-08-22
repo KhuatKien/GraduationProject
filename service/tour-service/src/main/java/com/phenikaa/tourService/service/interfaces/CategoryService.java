@@ -1,7 +1,6 @@
 package com.phenikaa.tourService.service.interfaces;
 
 import com.phenikaa.tourService.dto.response.ViewCategoryResponse;
-import com.phenikaa.tourService.entity.Category;
 
 import java.util.List;
 

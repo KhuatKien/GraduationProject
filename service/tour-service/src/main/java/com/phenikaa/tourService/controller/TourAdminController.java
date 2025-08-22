@@ -7,6 +7,7 @@ import com.phenikaa.tourService.entity.Tour;
 import com.phenikaa.tourService.service.interfaces.TourService;
 import com.phenikaa.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -78,6 +79,37 @@ public class TourAdminController {
     @PostMapping("/updateTour")
     public Tour updateTour(@RequestBody UpdateTourRequest tour) {
         return tourService.updateTour(tour);
+    }
+
+    @PutMapping("/updateTour/{id}")
+    public ResponseEntity<?> updateTourWithFiles(
+            @PathVariable("id") Integer tourId,
+            @RequestHeader("Authorization") String token,
+            @ModelAttribute UpdateTourRequest request) {
+        try {
+            // Extract userId from token (similar to addTour)
+            Integer userId = jwtUtil.extractUserId(token);
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("success", false, "message", "Unable to get user information"));
+            }
+
+            // Call service updateTourWithFiles
+            Tour updatedTour = tourService.updateTourWithFiles(tourId, userId, request);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Tour updated successfully",
+                    "tourId", updatedTour.getTourId(),
+                    "data", updatedTour));
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Error uploading images: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", "Error updating tour: " + e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}")

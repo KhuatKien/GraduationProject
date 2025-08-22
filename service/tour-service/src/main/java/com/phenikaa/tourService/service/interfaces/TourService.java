@@ -13,7 +13,7 @@ public interface TourService {
     List<ViewTourResponse> searchToursByKeywordAndFilter(String keyword, String filterBy);
     Tour addTour(Integer userId, AddTourRequest tour) throws IOException;
     Tour updateTour(UpdateTourRequest tour);
+    Tour updateTourWithFiles(Integer tourId, Integer userId, UpdateTourRequest request) throws IOException;
     ViewTourResponse viewTour(Integer tourId);
     void deleteTour(Integer tourId);
-
 }

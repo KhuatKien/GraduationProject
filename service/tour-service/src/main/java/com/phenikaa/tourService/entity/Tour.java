@@ -1,11 +1,12 @@
 package com.phenikaa.tourService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Entity
@@ -16,7 +17,7 @@ import java.util.List;
 @Setter
 @ToString
 @Builder
-public class  Tour {
+public class Tour {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tour_id", nullable = false, updatable = false)
@@ -45,9 +46,6 @@ public class  Tour {
     @Column(columnDefinition = "NVARCHAR(255)")
     private String destination; // điểm đến
 
-    @Column(name = "max_participants")
-    private Integer maxParticipants;
-
     @Enumerated(EnumType.STRING)
     private TourStatus status; // ACTIVE, INACTIVE, FULL, CANCELLED
 
@@ -73,11 +71,11 @@ public class  Tour {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     // Relationships
     @ManyToOne(fetch = FetchType.LAZY)

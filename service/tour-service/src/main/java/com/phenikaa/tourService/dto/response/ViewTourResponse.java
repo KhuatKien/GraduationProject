@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -23,7 +23,6 @@ public class ViewTourResponse {
     private String departure;
     private String destination;
     private Integer maxParticipants;
-    private Integer availableSlots;
     private String status;
     private Boolean featured;
     private Boolean isHot;
@@ -32,8 +31,8 @@ public class ViewTourResponse {
     private String excludes;
     private String terms;
     private Integer createBy;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
+    private Instant updatedAt;
     private ViewCategoryResponse category;
 
     private List<ViewTourImageResponse> images;

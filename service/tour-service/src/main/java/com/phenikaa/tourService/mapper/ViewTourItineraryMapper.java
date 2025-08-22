@@ -9,5 +9,6 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ViewTourItineraryMapper {
     ViewTourItineraryResponse toDto(TourItinerary itinerary);
+
     List<ViewTourItineraryResponse> toDtoList(List<TourItinerary> itineraries);
 }

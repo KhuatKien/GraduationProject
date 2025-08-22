@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -14,8 +14,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class UpdateTourScheduleRequest {
     private Integer scheduleId;
-    private LocalDate departureDate;
-    private LocalDate returnDate;
+    private Instant departureDate;
+    private Instant returnDate;
     private Double specialPrice;
     private Integer availableSlots;
     private ScheduleStatus status;
