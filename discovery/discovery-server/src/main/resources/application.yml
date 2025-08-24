@@ -4,7 +4,7 @@ spring:
   application:
     name: discovery-server
 
-erureka:
+eureka:
   client:
     register-with-eureka: false # Eureka Server is not a client of itself
     fetch-registry: false

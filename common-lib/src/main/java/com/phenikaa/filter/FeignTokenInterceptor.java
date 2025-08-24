@@ -1,4 +1,4 @@
-package com.phenikaa.tourService.config;
+package com.phenikaa.filter;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;

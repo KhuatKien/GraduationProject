@@ -22,7 +22,6 @@ public class ViewTourResponse {
     private Integer duration;
     private String departure;
     private String destination;
-    private Integer maxParticipants;
     private String status;
     private Boolean featured;
     private Boolean isHot;

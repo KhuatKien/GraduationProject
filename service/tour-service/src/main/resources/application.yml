@@ -21,5 +21,3 @@ spring:
         max-attempts: 6 # Maximum number of retry attempts
         multiplier: 1.2 # Multiplier for the retry interval
         initial-interval: 1000 # Retry interval in milliseconds
-    discovery:
-      enabled: true

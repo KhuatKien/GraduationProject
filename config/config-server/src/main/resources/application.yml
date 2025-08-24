@@ -11,6 +11,12 @@ spring:
             - auth-service
             - user-service
             - tour-service
+            - booking-service
+            - payment-service
+            - notification-service
+            - review-service
+            - promotion-service
+            - chatbot-service
 logging:
   level:
     org.springframework.cloud.config: DEBUG

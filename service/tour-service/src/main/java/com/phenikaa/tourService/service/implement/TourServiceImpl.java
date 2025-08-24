@@ -130,9 +130,7 @@ public class TourServiceImpl implements TourService {
         updateTourSchedules(existingTour, dto.getSchedules());
         updateTourItineraries(existingTour, dto.getItineraries());
 
-        Tour savedTour = tourRepository.save(existingTour);
-        System.out.println("✅ Tour updated successfully with ID: " + tourId);
-        return savedTour;
+        return tourRepository.save(existingTour);
     }
 
     private void updateTourImages(Tour existingTour, List<UpdateTourImageRequest> newImageDtos) throws IOException {
@@ -165,7 +163,6 @@ public class TourServiceImpl implements TourService {
                 imageToKeep.setSortOrder(imageDto.getSortOrder() != null ? imageDto.getSortOrder() : 0);
                 updatedImages.add(imageToKeep);
                 currentImages.remove(imageToKeep);
-                System.out.println("✅ Updated existing image metadata: " + imageToKeep.getImageUrl());
 
             } else if (imageDto.getImageFile() != null && !imageDto.getImageFile().isEmpty()) {
                 try {
@@ -178,7 +175,6 @@ public class TourServiceImpl implements TourService {
                             .tour(existingTour)
                             .build();
                     updatedImages.add(newImage);
-                    System.out.println("✅ Added new image: " + imageUrl);
                 } catch (IOException e) {
                     throw new IOException(
                             "Failed to upload new image: " + imageDto.getImageFile().getOriginalFilename(), e);
@@ -190,7 +186,6 @@ public class TourServiceImpl implements TourService {
             try {
                 String publicId = cloudinaryService.extractPublicIdFromUrl(deletedImage.getImageUrl());
                 cloudinaryService.deleteImage(publicId);
-                System.out.println("🗑️ Deleted image from Cloudinary: " + publicId);
             } catch (Exception e) {
                 System.err.println("Warning: Failed to delete image from Cloudinary: " + deletedImage.getImageUrl()
                         + " - " + e.getMessage());
@@ -243,14 +238,7 @@ public class TourServiceImpl implements TourService {
                                                                                 // maxParticipants
                 newSchedule.setTour(existingTour);
                 updatedSchedules.add(newSchedule);
-                System.out.println("✅ Added new schedule: " + scheduleDto.getDepartureDate() + " -> "
-                        + scheduleDto.getReturnDate());
             }
-        }
-
-        for (TourSchedule deletedSchedule : currentSchedules) {
-            System.out.println("🗑️ Removed schedule: " + deletedSchedule.getDepartureDate() + " -> "
-                    + deletedSchedule.getReturnDate());
         }
 
         existingTour.getSchedules().clear();
@@ -288,8 +276,6 @@ public class TourServiceImpl implements TourService {
                 existingItinerary.setAccommodation(itineraryDto.getAccommodation());
                 updatedItineraries.add(existingItinerary);
                 currentItineraries.remove(existingItinerary);
-                System.out.println("✅ Updated existing itinerary for Day " + itineraryDto.getDayNumber());
-
             } else {
                 TourItinerary newItinerary = new TourItinerary();
                 newItinerary.setDayNumber(itineraryDto.getDayNumber());
@@ -300,12 +286,7 @@ public class TourServiceImpl implements TourService {
                 newItinerary.setAccommodation(itineraryDto.getAccommodation());
                 newItinerary.setTour(existingTour);
                 updatedItineraries.add(newItinerary);
-                System.out.println("✅ Added new itinerary for Day " + itineraryDto.getDayNumber());
             }
-        }
-
-        for (TourItinerary deletedItinerary : currentItineraries) {
-            System.out.println("🗑️ Removed itinerary for Day " + deletedItinerary.getDayNumber());
         }
 
         existingTour.getItineraries().clear();
@@ -345,7 +326,6 @@ public class TourServiceImpl implements TourService {
             try {
                 String folderName = "tours/" + tour.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
                 cloudinaryService.deleteFolder(folderName);
-                System.out.println("Deleted Cloudinary folder: " + folderName);
             } catch (Exception folderException) {
                 System.out.println(
                         "Note: Folder deletion skipped (may be already empty): " + folderException.getMessage());
@@ -357,6 +337,5 @@ public class TourServiceImpl implements TourService {
         }
 
         tourRepository.delete(tour);
-        System.out.println("Deleted tour from database: " + tourId);
     }
 }
