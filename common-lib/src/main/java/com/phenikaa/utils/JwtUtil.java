@@ -39,13 +39,17 @@ public class JwtUtil {
     }
 
     private String cleanToken(String token) {
+        if (token == null) {
+            return "";
+        }
         return token.replace("Bearer ", "").trim();
     }
 
-    public String generateAccessToken(String username, Integer userId, Collection<? extends GrantedAuthority> authorities) {
-        List<String> roles = authorities.stream()
+    public String generateAccessToken(String username, Integer userId,
+            Collection<? extends GrantedAuthority> authorities) {
+        List<String> roles = authorities != null ? authorities.stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : List.of();
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + accessTokenExpiration);
@@ -89,11 +93,15 @@ public class JwtUtil {
     }
 
     public List<String> getRoles(String token) {
-        return extractClaims(token).get("roles", List.class);
+        List<String> roles = extractClaims(token).get("roles", List.class);
+        return roles != null ? roles : List.of();
     }
 
     public boolean validateToken(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
             extractClaims(token);
             return true;
         } catch (Exception ex) {
@@ -104,18 +112,5 @@ public class JwtUtil {
 
     public Date getExpirationDateFromToken(String token) {
         return extractClaims(token).getExpiration();
-    }
-
-    public String generateAccessToken(String username, List<String> roles) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + accessTokenExpiration);
-
-        return Jwts.builder()
-                .setSubject(username)
-                .claim("roles", roles)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
-                .compact();
     }
 }

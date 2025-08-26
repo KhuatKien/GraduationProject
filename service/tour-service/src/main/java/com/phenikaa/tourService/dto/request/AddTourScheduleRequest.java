@@ -23,8 +23,6 @@ public class AddTourScheduleRequest {
     @Future(message = "Return date must be in the future")
     private Instant returnDate;
 
-    private Double specialPrice;
-
     @NotNull(message = "Available slots is required")
     private Integer availableSlots;
 

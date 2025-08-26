@@ -16,7 +16,7 @@ public class UpdateTourScheduleRequest {
     private Integer scheduleId;
     private Instant departureDate;
     private Instant returnDate;
-    private Double specialPrice;
+
     private Integer availableSlots;
     private ScheduleStatus status;
 }

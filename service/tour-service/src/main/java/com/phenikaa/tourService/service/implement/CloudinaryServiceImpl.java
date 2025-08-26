@@ -87,11 +87,6 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     }
 
     @Override
-    public String getImageUrl(String imageName) {
-        return cloudinary.url().generate(imageName);
-    }
-
-    @Override
     public String extractPublicIdFromUrl(String imageUrl) {
         // Extract public ID from Cloudinary URL including folder path
         // Example:

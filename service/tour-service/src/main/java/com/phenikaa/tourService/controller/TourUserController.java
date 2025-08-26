@@ -6,6 +6,9 @@ import com.phenikaa.tourService.dto.response.ViewTourScheduleResponse;
 import com.phenikaa.tourService.service.interfaces.ScheduleService;
 import com.phenikaa.tourService.service.interfaces.TourService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +22,12 @@ public class TourUserController {
     private final TourService tourService;
     private final ScheduleService scheduleService;
 
-    @GetMapping("/getAllTours")
-    public ResponseEntity<List<ViewTourResponse>> getAllTours() {
-        List<ViewTourResponse> tours = tourService.getAllTours();
+    @GetMapping("/getAllTours/paginated")
+    public ResponseEntity<Page<ViewTourResponse>> getAllToursWithPagination(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ViewTourResponse> tours = tourService.getAllToursWithPagination(pageable);
         return ResponseEntity.ok(tours);
     }
 

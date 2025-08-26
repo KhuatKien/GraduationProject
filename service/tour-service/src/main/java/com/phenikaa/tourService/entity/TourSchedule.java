@@ -24,9 +24,6 @@ public class TourSchedule {
     @Column(name = "return_date", nullable = false)
     private Instant returnDate;
 
-    @Column(name = "special_price", nullable = false)
-    private Double specialPrice; // giá đặc biệt cho lịch trình này
-
     @Column(name = "available_slot", nullable = false)
     private Integer availableSlots;
 

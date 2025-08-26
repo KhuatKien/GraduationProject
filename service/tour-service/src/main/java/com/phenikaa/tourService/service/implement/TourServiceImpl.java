@@ -11,7 +11,11 @@ import com.phenikaa.tourService.repository.CategoryRepository;
 import com.phenikaa.tourService.repository.TourRepository;
 import com.phenikaa.tourService.service.interfaces.CloudinaryService;
 import com.phenikaa.tourService.service.interfaces.TourService;
+import com.phenikaa.tourService.specification.TourSpecification;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,15 +40,54 @@ public class TourServiceImpl implements TourService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public List<ViewTourResponse> getAllTours() {
-        List<Tour> tours = tourRepository.findAll();
+    public List<ViewTourResponse> searchToursByKeywordAndFilter(String keyword, String filterBy) {
+        List<Tour> tours = tourRepository.searchByKeywordAndFilter(keyword, filterBy);
         return tours.stream().map(viewTourMapper::toDto).collect(Collectors.toList());
     }
 
     @Override
-    public List<ViewTourResponse> searchToursByKeywordAndFilter(String keyword, String filterBy) {
-        List<Tour> tours = tourRepository.searchByKeywordAndFilter(keyword, filterBy);
-        return tours.stream().map(viewTourMapper::toDto).collect(Collectors.toList());
+    public Page<ViewTourResponse> getAllToursWithPagination(Pageable pageable) {
+        Page<Tour> tourPage = tourRepository.findAll(pageable);
+        return tourPage.map(viewTourMapper::toDto);
+    }
+
+    @Override
+    public Page<ViewTourResponse> searchToursByKeywordAndFilterWithPagination(String keyword, String filterBy,
+            Pageable pageable) {
+        Page<Tour> tourPage = tourRepository.searchByKeywordAndFilterWithPagination(keyword, filterBy, pageable);
+        return tourPage.map(viewTourMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ViewTourResponse> searchToursByQbe(SearchTourCriteria criteria, Pageable pageable) {
+        Page<Tour> tours = tourRepository.findByQbeCriteria(
+                criteria.getTitle(),
+                criteria.getDeparture(),
+                criteria.getDestination(),
+                criteria.getStatus(),
+                criteria.getCategoryName(),
+                criteria.getMinPrice(),
+                criteria.getMaxPrice(),
+                criteria.getMinDuration(),
+                criteria.getMaxDuration(),
+                criteria.getFeatured(),
+                criteria.getIsHot(),
+                criteria.getHasPromotion(),
+                pageable);
+        return tours.map(viewTourMapper::toDto);
+    }
+
+    @Override
+    public Page<ViewTourResponse> searchToursBySpecification(SearchTourCriteria criteria, Pageable pageable) {
+        // Tạo Specification từ criteria
+        Specification<Tour> spec = TourSpecification.withDynamicFilters(criteria);
+
+        // Thực hiện search với Specification
+        Page<Tour> tourPage = tourRepository.findAll(spec, pageable);
+
+        // Convert to DTO
+        return tourPage.map(viewTourMapper::toDto);
     }
 
     @Override
@@ -78,11 +121,7 @@ public class TourServiceImpl implements TourService {
             tour.getItineraries().forEach(itinerary -> itinerary.setTour(tour));
         }
         if (tour.getSchedules() != null) {
-            tour.getSchedules().forEach(schedule -> {
-                schedule.setTour(tour);
-                // availableSlots now comes from the request, no need to set from
-                // maxParticipants
-            });
+            tour.getSchedules().forEach(schedule -> schedule.setTour(tour));
         }
 
         return tourRepository.save(tour);
@@ -221,7 +260,6 @@ public class TourServiceImpl implements TourService {
             }
 
             if (existingSchedule != null) {
-                existingSchedule.setSpecialPrice(scheduleDto.getSpecialPrice());
                 existingSchedule.setStatus(scheduleDto.getStatus());
                 updatedSchedules.add(existingSchedule);
                 currentSchedules.remove(existingSchedule);
@@ -232,7 +270,6 @@ public class TourServiceImpl implements TourService {
                 TourSchedule newSchedule = new TourSchedule();
                 newSchedule.setDepartureDate(scheduleDto.getDepartureDate());
                 newSchedule.setReturnDate(scheduleDto.getReturnDate());
-                newSchedule.setSpecialPrice(scheduleDto.getSpecialPrice());
                 newSchedule.setStatus(scheduleDto.getStatus());
                 newSchedule.setAvailableSlots(scheduleDto.getAvailableSlots()); // Get from request instead of
                                                                                 // maxParticipants

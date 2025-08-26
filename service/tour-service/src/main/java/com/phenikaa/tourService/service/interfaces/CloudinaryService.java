@@ -11,7 +11,5 @@ public interface CloudinaryService {
 
     void deleteFolder(String folderName) throws IOException;
 
-    String getImageUrl(String imageName);
-
     String extractPublicIdFromUrl(String imageUrl);
 }

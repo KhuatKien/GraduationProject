@@ -2,7 +2,6 @@ package com.phenikaa.api_gateway.config;
 
 import com.phenikaa.api_gateway.security.JwtAuthenticationManager;
 import com.phenikaa.api_gateway.security.ServerHttpBearerAuthenticationConverter;
-import com.phenikaa.utils.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -27,17 +26,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-                                                         JwtAuthenticationManager jwtAuthManager,
-                                                         ServerHttpBearerAuthenticationConverter authConverter) {
+            JwtAuthenticationManager jwtAuthManager,
+            ServerHttpBearerAuthenticationConverter authConverter) {
 
         AuthenticationWebFilter authenticationWebFilter = new AuthenticationWebFilter(jwtAuthManager);
         authenticationWebFilter.setServerAuthenticationConverter(authConverter);
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> {})
+                .cors(cors -> {
+                })
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() //cho phép tất cả các options
+                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() // cho phép tất cả các options
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/internal/users/**").permitAll()
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
@@ -47,15 +47,9 @@ public class SecurityConfig {
                         .pathMatchers("/api/tour/user/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/booking/user/**").hasAnyRole("CUSTOMER", "ADMIN")
 
-                        .anyExchange().authenticated()
-                )
+                        .anyExchange().authenticated())
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
-    }
-
-    @Bean
-    public JwtAuthenticationManager jwtAuthenticationManager(JwtUtil jwtUtil) {
-        return new JwtAuthenticationManager(jwtUtil);
     }
 
     @Bean

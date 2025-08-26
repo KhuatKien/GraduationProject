@@ -1,12 +1,16 @@
 package com.phenikaa.tourService.controller;
 
 import com.phenikaa.tourService.dto.request.AddTourRequest;
+import com.phenikaa.tourService.dto.request.SearchTourCriteria;
 import com.phenikaa.tourService.dto.request.UpdateTourRequest;
 import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.entity.Tour;
 import com.phenikaa.tourService.service.interfaces.TourService;
 import com.phenikaa.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,18 +27,52 @@ public class TourAdminController {
     private final TourService tourService;
     private final JwtUtil jwtUtil;
 
-    @GetMapping("/getAllTours")
-    public ResponseEntity<List<ViewTourResponse>> getAllTours() {
-        List<ViewTourResponse> tours = tourService.getAllTours();
-        return ResponseEntity.ok(tours);
-    }
-
     @GetMapping("/search")
     public ResponseEntity<List<ViewTourResponse>> searchTours(
             @RequestParam String keyword,
             @RequestParam String filterBy) {
 
         List<ViewTourResponse> tours = tourService.searchToursByKeywordAndFilter(keyword, filterBy);
+        return ResponseEntity.ok(tours);
+    }
+
+    @GetMapping("/getAllTours/paginated")
+    public ResponseEntity<Page<ViewTourResponse>> getAllToursWithPagination(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ViewTourResponse> tours = tourService.getAllToursWithPagination(pageable);
+        return ResponseEntity.ok(tours);
+    }
+
+    @GetMapping("/search/paginated")
+    public ResponseEntity<Page<ViewTourResponse>> searchToursByKeywordAndFilterWithPagination(
+            @RequestParam String keyword,
+            @RequestParam String filterBy,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ViewTourResponse> tours = tourService.searchToursByKeywordAndFilterWithPagination(keyword, filterBy, pageable);
+        return ResponseEntity.ok(tours);
+    }
+
+    @PostMapping("/search/qbe/paginated")
+    public ResponseEntity<Page<ViewTourResponse>> searchToursByQbePaginated(
+            @RequestBody SearchTourCriteria criteria,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ViewTourResponse> tours = tourService.searchToursByQbe(criteria, pageable);
+        return ResponseEntity.ok(tours);
+    }
+
+    @PostMapping("/search/dynamic/paginated")
+    public ResponseEntity<Page<ViewTourResponse>> searchToursDynamic(
+            @RequestBody SearchTourCriteria criteria,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ViewTourResponse> tours = tourService.searchToursBySpecification(criteria, pageable);
         return ResponseEntity.ok(tours);
     }
 

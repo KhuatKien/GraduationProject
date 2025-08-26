@@ -12,52 +12,53 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class UserServiceClient {
 
-    private final WebClient.Builder webClientBuilder;
-    private final String userServiceUrl = "http://localhost:8083";
+        private final WebClient.Builder webClientBuilder;
 
-    public Mono<UserInfoResponse> verifyUser(LoginRequest request) {
-        return webClientBuilder.baseUrl(userServiceUrl)
-                .build()
-                .post()
-                .uri("/internal/users/verify")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(UserInfoResponse.class);
-    }
+        private final String userServiceUrl = "http://localhost:8083";
 
-    public Mono<Void> saveRefreshToken(SaveRefreshTokenRequest request) {
-        return webClientBuilder.baseUrl(userServiceUrl)
-                .build()
-                .post()
-                .uri("/internal/users/saveRefreshToken")
-                .bodyValue(request)
-                .retrieve()
-                .toBodilessEntity()
-                .then();
-    }
+        public Mono<UserInfoResponse> verifyUser(LoginRequest request) {
+                return webClientBuilder.baseUrl(userServiceUrl)
+                                .build()
+                                .post()
+                                .uri("/internal/users/verify")
+                                .bodyValue(request)
+                                .retrieve()
+                                .bodyToMono(UserInfoResponse.class);
+        }
 
-    public Mono<Void> deleteRefreshToken(String refreshToken) {
-        return webClientBuilder.baseUrl(userServiceUrl)
-                .build()
-                .delete()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/internal/users/deleteRefreshToken")
-                        .queryParam("token", refreshToken)
-                        .build())
-                .retrieve()
-                .toBodilessEntity()
-                .then();
-    }
+        public Mono<Void> saveRefreshToken(SaveRefreshTokenRequest request) {
+                return webClientBuilder.baseUrl(userServiceUrl)
+                                .build()
+                                .post()
+                                .uri("/internal/users/saveRefreshToken")
+                                .bodyValue(request)
+                                .retrieve()
+                                .toBodilessEntity()
+                                .then();
+        }
 
-    public Mono<UserInfoResponse> getUserByRefreshToken(String refreshToken) {
-        return webClientBuilder.baseUrl(userServiceUrl)
-                .build()
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/internal/users/getUserByRefreshToken")
-                        .queryParam("token", refreshToken)
-                        .build())
-                .retrieve()
-                .bodyToMono(UserInfoResponse.class);
-    }
+        public Mono<Void> deleteRefreshToken(String refreshToken) {
+                return webClientBuilder.baseUrl(userServiceUrl)
+                                .build()
+                                .delete()
+                                .uri(uriBuilder -> uriBuilder
+                                                .path("/internal/users/deleteRefreshToken")
+                                                .queryParam("token", refreshToken)
+                                                .build())
+                                .retrieve()
+                                .toBodilessEntity()
+                                .then();
+        }
+
+        public Mono<UserInfoResponse> getUserByRefreshToken(String refreshToken) {
+                return webClientBuilder.baseUrl(userServiceUrl)
+                                .build()
+                                .get()
+                                .uri(uriBuilder -> uriBuilder
+                                                .path("/internal/users/getUserByRefreshToken")
+                                                .queryParam("token", refreshToken)
+                                                .build())
+                                .retrieve()
+                                .bodyToMono(UserInfoResponse.class);
+        }
 }
