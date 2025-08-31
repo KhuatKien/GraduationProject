@@ -7,6 +7,7 @@ import com.phenikaa.tourService.entity.TourImage;
 import com.phenikaa.tourService.entity.TourItinerary;
 import com.phenikaa.tourService.entity.TourSchedule;
 import com.phenikaa.tourService.mapper.*;
+import com.phenikaa.tourService.projection.TourSummaryProjection;
 import com.phenikaa.tourService.repository.CategoryRepository;
 import com.phenikaa.tourService.repository.TourRepository;
 import com.phenikaa.tourService.service.interfaces.CloudinaryService;
@@ -15,15 +16,24 @@ import com.phenikaa.tourService.specification.TourSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.Instant;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +56,7 @@ public class TourServiceImpl implements TourService {
     }
 
     @Override
-    public Page<ViewTourResponse> getAllToursWithPagination(Pageable pageable) {
+    public Page<ViewTourResponse> getAllTours(Pageable pageable) {
         Page<Tour> tourPage = tourRepository.findAll(pageable);
         return tourPage.map(viewTourMapper::toDto);
     }
@@ -91,6 +101,69 @@ public class TourServiceImpl implements TourService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<ViewTourResponse> searchToursByExample(SearchTourCriteria criteria, Pageable pageable) {
+        // Tạo Example object từ criteria
+        Tour exampleTour = createExampleTour(criteria);
+
+        // Tạo ExampleMatcher đơn giản với các rule so sánh
+        ExampleMatcher matcher = ExampleMatcher.matching()
+                .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
+                .withIgnoreCase(true);
+
+        // Tạo Example object
+        Example<Tour> example = Example.of(exampleTour, matcher);
+
+        // Thực hiện search với Example
+        Page<Tour> tours = tourRepository.findAll(example, pageable);
+
+        // Convert to DTO
+        return tours.map(viewTourMapper::toDto);
+    }
+
+    private Tour createExampleTour(SearchTourCriteria criteria) {
+        Tour exampleTour = new Tour();
+        if (criteria.getTitle() != null && !criteria.getTitle().isEmpty()) {
+            exampleTour.setTitle(criteria.getTitle());
+        }
+        if (criteria.getDeparture() != null && !criteria.getDeparture().isEmpty()) {
+            exampleTour.setDeparture(criteria.getDeparture());
+        }
+        if (criteria.getDestination() != null && !criteria.getDestination().isEmpty()) {
+            exampleTour.setDestination(criteria.getDestination());
+        }
+        if (criteria.getStatus() != null) {
+            exampleTour.setStatus(criteria.getStatus());
+        }
+        if (criteria.getCategoryName() != null && !criteria.getCategoryName().isEmpty()) {
+            exampleTour.setCategory(categoryRepository.findByName(criteria.getCategoryName())
+                    .orElse(null));
+        }
+        if (criteria.getMinPrice() != null) {
+            exampleTour.setAdultPrice(criteria.getMinPrice());
+        }
+        if (criteria.getMaxPrice() != null) {
+            exampleTour.setAdultPrice(criteria.getMaxPrice());
+        }
+        if (criteria.getMinDuration() != null) {
+            exampleTour.setDuration(criteria.getMinDuration());
+        }
+        if (criteria.getMaxDuration() != null) {
+            exampleTour.setDuration(criteria.getMaxDuration());
+        }
+        if (criteria.getFeatured() != null) {
+            exampleTour.setFeatured(criteria.getFeatured());
+        }
+        if (criteria.getIsHot() != null) {
+            exampleTour.setIsHot(criteria.getIsHot());
+        }
+        if (criteria.getHasPromotion() != null) {
+            exampleTour.setHasPromotion(criteria.getHasPromotion());
+        }
+        return exampleTour;
+    }
+
+    @Override
     public Tour addTour(Integer userId, AddTourRequest dto) throws IOException {
         if (dto.getImages() != null && !dto.getImages().isEmpty()) {
             String folderName = "tours/" + dto.getTitle().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
@@ -125,17 +198,6 @@ public class TourServiceImpl implements TourService {
         }
 
         return tourRepository.save(tour);
-    }
-
-    @Override
-    public Tour updateTour(UpdateTourRequest request) {
-        Tour existingTour = tourRepository.findById(request.getTourId())
-                .orElseThrow(() -> new RuntimeException("Tour not found"));
-
-        updateTourMapper.updateTourWithCollections(request, existingTour,
-                updateTourImageMapper, updateTourItineraryMapper, updateTourScheduleMapper);
-
-        return tourRepository.save(existingTour);
     }
 
     @Override
@@ -374,5 +436,38 @@ public class TourServiceImpl implements TourService {
         }
 
         tourRepository.delete(tour);
+    }
+
+    // ========== PROJECTION METHOD ==========
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TourSummaryProjection> getAllActiveToursSummary(Pageable pageable) {
+        return tourRepository.findAllActiveToursSummary(pageable);
+    }
+
+    // TIME-BASED PAGING METHOD
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TourSummaryProjection> getAllActiveToursTimeBased(int page) {
+        Instant now = Instant.now();
+
+        Instant startDate = now.minus(Duration.ofDays(page * 7));
+        Instant endDate = now.minus(Duration.ofDays((page - 1) * 7));
+
+        List<TourSummaryProjection> allToursInTimeRange = tourRepository.findAllActiveToursInTimeRange(
+                startDate, endDate);
+
+        int totalElements = allToursInTimeRange.size();
+
+        // Nếu không có tour nào, trả về Page rỗng
+        if (totalElements == 0) {
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10), 0);
+        }
+
+        // Nếu có tour, tạo Page bình thường
+        Pageable pageRequest = PageRequest.of(0, totalElements);
+        return new PageImpl<>(allToursInTimeRange, pageRequest, totalElements);
     }
 }

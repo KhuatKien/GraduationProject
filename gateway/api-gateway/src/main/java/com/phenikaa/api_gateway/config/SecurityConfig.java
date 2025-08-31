@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/category/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/user/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .pathMatchers("/api/booking/admin/**").hasAnyRole("ADMIN")
                         .pathMatchers("/api/booking/user/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .anyExchange().authenticated())

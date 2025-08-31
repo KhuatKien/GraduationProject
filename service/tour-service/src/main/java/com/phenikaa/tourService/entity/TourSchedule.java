@@ -33,7 +33,4 @@ public class TourSchedule {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tour_id")
     private Tour tour;
-
-    // @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
-    // private List<Booking> bookings;
 }

@@ -5,6 +5,7 @@ import com.phenikaa.tourService.dto.request.SearchTourCriteria;
 import com.phenikaa.tourService.dto.request.UpdateTourRequest;
 import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.entity.Tour;
+import com.phenikaa.tourService.projection.TourSummaryProjection;
 import com.phenikaa.tourService.service.interfaces.TourService;
 import com.phenikaa.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +37,22 @@ public class TourAdminController {
         return ResponseEntity.ok(tours);
     }
 
-    @GetMapping("/getAllTours/paginated")
-    public ResponseEntity<Page<ViewTourResponse>> getAllToursWithPagination(
+    @GetMapping("/getAllTours")
+    public ResponseEntity<Page<ViewTourResponse>> getAllTours(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<ViewTourResponse> tours = tourService.getAllToursWithPagination(pageable);
+        Page<ViewTourResponse> tours = tourService.getAllTours(pageable);
+        return ResponseEntity.ok(tours);
+    }
+
+    // TIME-BASED PAGING ENDPOINT
+
+    @GetMapping("/getAllTours/timeBased")
+    public ResponseEntity<Page<TourSummaryProjection>> getAllToursTimeBased(
+            @RequestParam(defaultValue = "1") int page) {
+
+        Page<TourSummaryProjection> tours = tourService.getAllActiveToursTimeBased(page);
         return ResponseEntity.ok(tours);
     }
 
@@ -52,7 +63,8 @@ public class TourAdminController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<ViewTourResponse> tours = tourService.searchToursByKeywordAndFilterWithPagination(keyword, filterBy, pageable);
+        Page<ViewTourResponse> tours = tourService.searchToursByKeywordAndFilterWithPagination(keyword, filterBy,
+                pageable);
         return ResponseEntity.ok(tours);
     }
 
@@ -63,6 +75,16 @@ public class TourAdminController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<ViewTourResponse> tours = tourService.searchToursByQbe(criteria, pageable);
+        return ResponseEntity.ok(tours);
+    }
+
+    @PostMapping("/search/example/paginated")
+    public ResponseEntity<Page<ViewTourResponse>> searchToursByExamplePaginated(
+            @RequestBody SearchTourCriteria criteria,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ViewTourResponse> tours = tourService.searchToursByExample(criteria, pageable);
         return ResponseEntity.ok(tours);
     }
 
@@ -112,11 +134,6 @@ public class TourAdminController {
                     "success", false,
                     "message", "Lỗi khi tạo tour: " + e.getMessage()));
         }
-    }
-
-    @PostMapping("/updateTour")
-    public Tour updateTour(@RequestBody UpdateTourRequest tour) {
-        return tourService.updateTour(tour);
     }
 
     @PutMapping("/updateTour/{id}")
