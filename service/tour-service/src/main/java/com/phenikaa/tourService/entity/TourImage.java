@@ -11,7 +11,7 @@ import lombok.*;
 @Setter
 @ToString
 @Builder
-public class TourImage {
+public class    TourImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tour_image_id", nullable = false, updatable = false)

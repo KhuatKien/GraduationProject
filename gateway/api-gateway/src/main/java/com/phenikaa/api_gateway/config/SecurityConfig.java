@@ -47,6 +47,9 @@ public class SecurityConfig {
                         .pathMatchers("/api/tour/user/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/booking/admin/**").hasAnyRole("ADMIN")
                         .pathMatchers("/api/booking/user/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .pathMatchers("/api/notifications/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .pathMatchers("/ws/notifications/**").permitAll()
+
 
                         .anyExchange().authenticated())
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

@@ -1,4 +1,4 @@
-package com.phenikaa.paymentservice.entity;
+package com.phenikaa.paymentService.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,6 +1,5 @@
 package com.phenikaa.tourService.repository;
 
-import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.entity.Tour;
 import com.phenikaa.tourService.entity.TourStatus;
 import com.phenikaa.tourService.projection.TourSummaryProjection;
@@ -11,7 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.LocalDateTime;
 import java.time.Instant;
 import java.util.List;
 

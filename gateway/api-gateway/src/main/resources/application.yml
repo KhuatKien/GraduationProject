@@ -49,6 +49,22 @@ spring:
                 pattern:
                   - /api/booking/**
 
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - name: Path
+              args:
+                pattern:
+                  - /api/notifications/**
+
+        - id: notification-service-ws
+          uri: lb:ws://notification-service
+          predicates:
+            - name: Path
+              args:
+                pattern:
+                  - /ws/notifications/**
+
 eureka:
   client:
     service-url:
