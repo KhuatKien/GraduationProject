@@ -37,6 +37,13 @@ public class InternalUserController {
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserInfoResponse> getUserById(@PathVariable Integer userId) {
+        return userService.getUserInfoById(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/saveRefreshToken")
     public ResponseEntity<Void> saveRefreshToken(@RequestBody SaveRefreshTokenRequest request) {
         refreshTokenService.saveRefreshToken(request);

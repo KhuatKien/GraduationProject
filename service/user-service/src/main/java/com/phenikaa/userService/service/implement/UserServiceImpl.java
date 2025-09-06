@@ -65,6 +65,22 @@ public class UserServiceImpl implements UserService {
                 .map(user -> new UserInfoResponse(
                         user.getUserId(),
                         user.getUserName(),
+                        user.getEmail(),
+                        user.getPhoneNumber(),
+                        user.getRoles().stream()
+                                .map(role -> role.getRoleName().name())
+                                .collect(Collectors.toList())
+                ));
+    }
+
+    @Override
+    public Optional<UserInfoResponse> getUserInfoById(Integer userId) {
+        return userRepository.findById(userId)
+                .map(user -> new UserInfoResponse(
+                        user.getUserId(),
+                        user.getUserName(),
+                        user.getEmail(),
+                        user.getPhoneNumber(),
                         user.getRoles().stream()
                                 .map(role -> role.getRoleName().name())
                                 .collect(Collectors.toList())

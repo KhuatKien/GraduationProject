@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface UserService {
     User save(RegisterRequest registerRequest);
     Optional<UserInfoResponse> verifyUser(LoginRequest request);
+    Optional<UserInfoResponse> getUserInfoById(Integer userId);
 }

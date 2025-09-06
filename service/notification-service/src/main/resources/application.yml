@@ -16,3 +16,22 @@ spring:
         max-attempts: 6 # Maximum number of retry attempts
         multiplier: 1.2 # Multiplier for the retry interval
         initial-interval: 1000 # Retry interval in milliseconds
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: kien18122k3@gmail.com
+    password: infx xsyy kcht ghlb
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+sms:
+  twilio:
+    account-sid: AC518e86b607b2229e2ec3f3629b29880c
+    auth-token: 20de94e0acb9ed7f55a2721420524c72
+    phone-number: +14722124118

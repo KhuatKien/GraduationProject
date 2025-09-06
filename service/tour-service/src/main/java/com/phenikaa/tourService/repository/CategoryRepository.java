@@ -1,6 +1,5 @@
 package com.phenikaa.tourService.repository;
 
-import com.phenikaa.tourService.dto.response.ViewCategoryResponse;
 import com.phenikaa.tourService.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
