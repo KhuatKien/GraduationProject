@@ -58,7 +58,26 @@ public class TourServiceImpl implements TourService {
     @Override
     public Page<ViewTourResponse> getAllTours(Pageable pageable) {
         Page<Tour> tourPage = tourRepository.findAll(pageable);
-        return tourPage.map(viewTourMapper::toDto);
+
+        // Map tours with additional statistics
+        List<ViewTourResponse> toursWithStats = tourPage.getContent().stream()
+                .map(tour -> {
+                    // Get review statistics
+                    Double averageRating = tourRepository.getAverageRatingByTourId(tour.getTourId());
+                    Long reviewCount = tourRepository.countByTourId(tour.getTourId());
+
+                    // Map basic tour data
+                    ViewTourResponse response = viewTourMapper.toDto(tour);
+
+                    // Set additional statistics
+                    response.setAverageRating(averageRating != null ? averageRating : 0.0);
+                    response.setReviewCount(reviewCount);
+
+                    return response;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(toursWithStats, pageable, tourPage.getTotalElements());
     }
 
     @Override

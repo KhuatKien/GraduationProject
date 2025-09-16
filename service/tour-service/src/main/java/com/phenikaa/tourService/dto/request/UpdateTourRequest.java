@@ -1,6 +1,6 @@
 package com.phenikaa.tourService.dto.request;
 
-import com.phenikaa.tourService.entity.TourStatus;
+import com.phenikaa.tourService.enums.TourStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

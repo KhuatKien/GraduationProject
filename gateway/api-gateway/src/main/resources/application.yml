@@ -40,6 +40,7 @@ spring:
                   - /api/tour/**
                   - /api/category/**
                   - /internal/tour/**
+                  - /api/reviews/**
 
         - id: booking-service
           uri: lb://booking-service

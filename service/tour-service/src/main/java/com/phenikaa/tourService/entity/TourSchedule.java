@@ -1,5 +1,6 @@
 package com.phenikaa.tourService.entity;
 
+import com.phenikaa.tourService.enums.ScheduleStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

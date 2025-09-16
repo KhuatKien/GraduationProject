@@ -1,7 +1,7 @@
 package com.phenikaa.tourService.repository;
 
 import com.phenikaa.tourService.entity.Tour;
-import com.phenikaa.tourService.entity.TourStatus;
+import com.phenikaa.tourService.enums.TourStatus;
 import com.phenikaa.tourService.projection.TourSummaryProjection;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
@@ -91,4 +91,11 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, JpaSpecifi
         List<TourSummaryProjection> findAllActiveToursInTimeRange(
                         @Param("startDate") Instant startDate,
                         @Param("endDate") Instant endDate);
+
+        // Review statistics methods
+        @Query("SELECT AVG(r.rating) FROM Review r WHERE r.tourId = :tourId")
+        Double getAverageRatingByTourId(@Param("tourId") Integer tourId);
+
+        @Query("SELECT COUNT(r) FROM Review r WHERE r.tourId = :tourId")
+        Long countByTourId(@Param("tourId") Integer tourId);
 }

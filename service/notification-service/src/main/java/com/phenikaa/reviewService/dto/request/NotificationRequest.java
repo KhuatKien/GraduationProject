@@ -1,0 +1,19 @@
+package com.phenikaa.reviewService.dto.request;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class NotificationRequest {
+    private Integer senderId;
+    private Integer receiverId;
+    private String title;
+    private String message;
+    private String type;
+    private String actionUrl;
+}

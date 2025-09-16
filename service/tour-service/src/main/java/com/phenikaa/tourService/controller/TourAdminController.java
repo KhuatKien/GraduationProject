@@ -22,7 +22,6 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-// @CrossOrigin(origins = "*")
 @RequestMapping("/api/tour/admin")
 public class TourAdminController {
     private final TourService tourService;
@@ -178,5 +177,4 @@ public class TourAdminController {
         tourService.deleteTour(id);
         return ResponseEntity.ok("Tour deleted successfully");
     }
-
 }

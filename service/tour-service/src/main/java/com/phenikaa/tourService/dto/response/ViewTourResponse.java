@@ -34,6 +34,10 @@ public class ViewTourResponse {
     private Instant updatedAt;
     private ViewCategoryResponse category;
 
+    // Review statistics
+    private Double averageRating;
+    private Long reviewCount;
+
     private List<ViewTourImageResponse> images;
     private List<ViewTourItineraryResponse> itineraries;
     private List<ViewTourScheduleResponse> schedules;
