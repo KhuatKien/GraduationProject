@@ -19,12 +19,13 @@ public interface UserMapper {
 
     GetUserResponse toDTO(User user);
 
-    @Mapping(source = "roles",target = "roles", qualifiedByName = "mapRoleNames")
+    @Mapping(source = "roles", target = "roles", qualifiedByName = "mapRoleNames")
     UserInfoResponse toUserInfoResponse(User user);
 
     @Named("mapRoleNames")
     default List<String> mapRoleNames(Set<Role> roles) {
-        if(roles == null) return null;
+        if (roles == null)
+            return null;
         return roles.stream()
                 .map(role -> role.getRoleName().name())
                 .collect(Collectors.toList());

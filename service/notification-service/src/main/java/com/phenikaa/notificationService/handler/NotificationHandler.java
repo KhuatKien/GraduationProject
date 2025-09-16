@@ -10,8 +10,8 @@ public interface NotificationHandler {
      * Xử lý tạo notification
      */
     Mono<Notification> handleNotification(Integer senderId, Integer receiverId,
-                                          String title, String message,
-                                          NotificationType type, String actionUrl);
+            String title, String message,
+            NotificationType type, String actionUrl);
 
     /**
      * Lấy loại channel mà handler này hỗ trợ

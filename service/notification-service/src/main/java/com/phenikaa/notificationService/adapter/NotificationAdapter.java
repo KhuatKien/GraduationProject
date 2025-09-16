@@ -9,15 +9,6 @@ import com.phenikaa.notificationService.entity.NotificationType;
  */
 public interface NotificationAdapter {
 
-    /**
-     * Gửi notification qua channel tương ứng
-     * 
-     * @param recipient Địa chỉ nhận (email, phone, userId)
-     * @param title     Tiêu đề
-     * @param message   Nội dung
-     * @param type      Loại notification
-     * @return true nếu gửi thành công, false nếu thất bại
-     */
     boolean sendNotification(String recipient, String title, String message, NotificationType type);
 
     /**

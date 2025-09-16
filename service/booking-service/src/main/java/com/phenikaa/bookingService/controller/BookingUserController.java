@@ -13,24 +13,23 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/booking/user")
 public class BookingUserController {
     private final JwtUtil jwtUtil;
     private final BookingService bookingService;
-//    private final RefundService refundService;
+    // private final RefundService refundService;
 
     @PostMapping("/createBooking/{scheduleId}")
     public ResponseEntity<?> createBooking(
             @PathVariable("scheduleId") Integer scheduleId,
             @RequestHeader("Authorization") String token,
-            @RequestBody CreateBookingRequest request){
+            @RequestBody CreateBookingRequest request) {
         try {
             Integer userId = jwtUtil.extractUserId(token);
             Booking booking = bookingService.createBooking(userId, scheduleId, request);
@@ -98,8 +97,7 @@ public class BookingUserController {
                             "bookingId", cancelledBooking.getBookingId(),
                             "bookingCode", cancelledBooking.getBookingCode(),
                             "status", cancelledBooking.getStatus(),
-                            "updatedAt", cancelledBooking.getUpdatedAt()
-                    )));
+                            "updatedAt", cancelledBooking.getUpdatedAt())));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -107,25 +105,26 @@ public class BookingUserController {
         }
     }
 
-//    @PostMapping("/requestRefund")
-//    public ResponseEntity<?> requestRefund(
-//            @RequestBody CreateRefundRequest request,
-//            @RequestHeader("Authorization") String token) {
-//        try {
-//            // Kiểm tra booking có thuộc về user này không
-//            Integer userId = jwtUtil.extractUserId(token);
-//            ViewBookingResponse booking = bookingService.getUserBookingDetail(userId, request.getBookingId());
-//
-//            // Tạo yêu cầu hoàn tiền
-//            Refund refund = refundService.createRefund(request);
-//            return ResponseEntity.ok(Map.of(
-//                    "success", true,
-//                    "message", "Gửi yêu cầu hoàn tiền thành công",
-//                    "data", refund));
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(Map.of(
-//                    "success", false,
-//                    "message", "Lỗi khi gửi yêu cầu hoàn tiền: " + e.getMessage()));
-//        }
-//    }
+    // @PostMapping("/requestRefund")
+    // public ResponseEntity<?> requestRefund(
+    // @RequestBody CreateRefundRequest request,
+    // @RequestHeader("Authorization") String token) {
+    // try {
+    // // Kiểm tra booking có thuộc về user này không
+    // Integer userId = jwtUtil.extractUserId(token);
+    // ViewBookingResponse booking = bookingService.getUserBookingDetail(userId,
+    // request.getBookingId());
+    //
+    // // Tạo yêu cầu hoàn tiền
+    // Refund refund = refundService.createRefund(request);
+    // return ResponseEntity.ok(Map.of(
+    // "success", true,
+    // "message", "Gửi yêu cầu hoàn tiền thành công",
+    // "data", refund));
+    // } catch (Exception e) {
+    // return ResponseEntity.badRequest().body(Map.of(
+    // "success", false,
+    // "message", "Lỗi khi gửi yêu cầu hoàn tiền: " + e.getMessage()));
+    // }
+    // }
 }

@@ -214,4 +214,93 @@ public class NotificationController {
         return ResponseEntity.ok("Notification with callback request submitted successfully");
     }
 
+    /**
+     * Gửi thông báo đến tất cả user
+     */
+    @PostMapping("/broadcast")
+    public ResponseEntity<String> broadcastToAllUsers(@RequestBody BroadcastNotificationRequest req) {
+        log.info("Received broadcast notification request: {}", req.getTitle());
+
+        try {
+            notificationService.broadcastToAllUsers(
+                    req.getSenderId(),
+                    req.getTitle(),
+                    req.getMessage(),
+                    NotificationType.valueOf(req.getType()),
+                    req.getActionUrl());
+
+            return ResponseEntity.ok("Broadcast notification sent to all users successfully");
+        } catch (Exception e) {
+            log.error("Error broadcasting notification: {}", e.getMessage());
+            return ResponseEntity.status(500).body("Error broadcasting notification: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Lấy danh sách thông báo của user
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getUserNotifications(@PathVariable Integer userId) {
+        try {
+            // TODO: Implement logic to get user notifications
+            // Tạm thời trả về danh sách rỗng
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        } catch (Exception e) {
+            log.error("Error getting user notifications: {}", e.getMessage());
+            return ResponseEntity.status(500).body("Error getting user notifications: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Inner class for broadcast request
+     */
+    public static class BroadcastNotificationRequest {
+        private Integer senderId;
+        private String title;
+        private String message;
+        private String type;
+        private String actionUrl;
+
+        // Getters and setters
+        public Integer getSenderId() {
+            return senderId;
+        }
+
+        public void setSenderId(Integer senderId) {
+            this.senderId = senderId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getActionUrl() {
+            return actionUrl;
+        }
+
+        public void setActionUrl(String actionUrl) {
+            this.actionUrl = actionUrl;
+        }
+    }
+
 }

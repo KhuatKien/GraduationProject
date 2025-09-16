@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class NotificationHandlerFactoryImpl implements NotificationHandlerFactory{
+public class NotificationHandlerFactoryImpl implements NotificationHandlerFactory {
     private final EmailNotificationHandler emailHandler;
     private final SmsNotificationHandler smsHandler;
     private final WebNotificationHandler webHandler;

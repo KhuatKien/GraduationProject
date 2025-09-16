@@ -41,7 +41,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/internal/users/**").permitAll()
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
-                        .pathMatchers("/api/users/**").hasRole("CUSTOMER")
+                        .pathMatchers("/api/users/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/category/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/user/**").hasAnyRole("CUSTOMER", "ADMIN")
@@ -49,7 +49,8 @@ public class SecurityConfig {
                         .pathMatchers("/api/booking/user/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/notifications/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/ws/notifications/**").permitAll()
-
+                        .pathMatchers("/api/promotions/user/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .pathMatchers("/api/promotions/admin/**").hasRole("ADMIN")
 
                         .anyExchange().authenticated())
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
@@ -65,10 +66,11 @@ public class SecurityConfig {
     @Order(-1)
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
         source.registerCorsConfiguration("/**", config);

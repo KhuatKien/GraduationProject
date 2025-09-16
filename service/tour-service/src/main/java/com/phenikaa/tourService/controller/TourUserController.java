@@ -3,6 +3,8 @@ package com.phenikaa.tourService.controller;
 import com.phenikaa.dto.response.GetInfoTour;
 import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.dto.response.ViewTourScheduleResponse;
+import com.phenikaa.dto.response.ScheduleInfoResponse;
+import com.phenikaa.tourService.entity.TourSchedule;
 import com.phenikaa.tourService.projection.TourSummaryProjection;
 import com.phenikaa.tourService.service.interfaces.ScheduleService;
 import com.phenikaa.tourService.service.interfaces.TourService;
@@ -24,13 +26,19 @@ public class TourUserController {
     private final TourService tourService;
     private final ScheduleService scheduleService;
 
-    @GetMapping("/getAllTours/paginated")
+    @GetMapping("/getAllTours")
     public ResponseEntity<Page<ViewTourResponse>> getAllTours(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<ViewTourResponse> tours = tourService.getAllTours(pageable);
         return ResponseEntity.ok(tours);
+    }
+
+    @GetMapping("/{tourId}")
+    public ResponseEntity<ViewTourResponse> viewTour(@PathVariable("tourId") Integer tourId) {
+        ViewTourResponse tour = tourService.viewTour(tourId);
+        return ResponseEntity.ok(tour);
     }
 
     @GetMapping("/getAllSchedules/{tourId}")
@@ -43,6 +51,28 @@ public class TourUserController {
     public ResponseEntity<GetInfoTour> getInfoTour(@PathVariable("scheduleId") Integer scheduleId) {
         GetInfoTour infoTour = scheduleService.getInfoTour(scheduleId);
         return ResponseEntity.ok(infoTour);
+    }
+
+    @GetMapping("/getSchedule/{scheduleId}")
+    public ResponseEntity<ScheduleInfoResponse> getSchedule(@PathVariable("scheduleId") Integer scheduleId) {
+        TourSchedule schedule = scheduleService.getScheduleById(scheduleId);
+
+        // Convert entity to DTO
+        ScheduleInfoResponse response = new ScheduleInfoResponse();
+        response.setScheduleId(schedule.getScheduleId());
+        response.setDepartureDate(
+                schedule.getDepartureDate().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+        response.setReturnDate(
+                schedule.getReturnDate().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+        response.setAvailableSlots(schedule.getAvailableSlots());
+        response.setStatus(schedule.getStatus().toString());
+
+        if (schedule.getTour() != null) {
+            response.setTourTitle(schedule.getTour().getTitle());
+            response.setTourDescription(schedule.getTour().getDescription());
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/updateAvailableSlot/{scheduleId}")
@@ -73,4 +103,10 @@ public class TourUserController {
 
         return ResponseEntity.ok(tours);
     }
+
+    @GetMapping("/AiChat")
+    public ResponseEntity<String> aiChatRedirect() {
+        return ResponseEntity.ok("AI Chat service is available at /api/tour/chat/");
+    }
+
 }

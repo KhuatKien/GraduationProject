@@ -6,7 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
@@ -39,6 +38,15 @@ public class Booking {
 
     @Column(name = "total_amount", nullable = false)
     private Double totalAmount;
+
+    @Column(name = "promotion_code")
+    private String promotionCode;
+
+    @Column(name = "discount_amount")
+    private Double discountAmount;
+
+    @Column(name = "final_amount", nullable = false)
+    private Double finalAmount;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status; // PENDING, CONFIRMED, CANCELLED, COMPLETED

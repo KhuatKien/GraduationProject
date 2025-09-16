@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -24,6 +25,20 @@ public class ViewBookingResponse {
     private Integer childCount;
 
     private Double totalAmount;
+
+    private Double finalAmount;
+
+    private Double discountAmount;
+
+    private String promotionCode;
+
+    private String tourTitle;
+
+    private String tourDescription;
+
+    private LocalDate departureDate;
+
+    private LocalDate returnDate;
 
     private BookingStatus status; // PENDING, CONFIRMED, CANCELLED, COMPLETED
 

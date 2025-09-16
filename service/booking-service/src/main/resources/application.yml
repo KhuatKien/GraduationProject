@@ -21,3 +21,12 @@ spring:
         max-attempts: 6 # Maximum number of retry attempts
         multiplier: 1.2 # Multiplier for the retry interval
         initial-interval: 1000 # Retry interval in milliseconds
+
+# Feign client configuration
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 10000
+        logger-level: basic

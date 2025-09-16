@@ -177,4 +177,37 @@ public class NotificationServiceImpl implements NotificationService {
                 });
     }
 
+    @Override
+    public void broadcastToAllUsers(Integer senderId, String title, String message,
+            NotificationType type, String actionUrl) {
+        log.info("Broadcasting notification to all users: {}", title);
+
+        try {
+            // Lấy danh sách tất cả user từ user-service
+            // Tạm thời sử dụng danh sách user cố định, sau này có thể gọi API user-service
+            // Để đơn giản, tôi sẽ tạo một số user ID mẫu
+            // Trong thực tế, cần gọi API user-service để lấy danh sách user thật
+
+            // TODO: Gọi API user-service để lấy danh sách tất cả user
+            // Tạm thời sử dụng danh sách user mẫu
+            java.util.List<Integer> allUserIds = java.util.Arrays.asList(1, 2, 3, 4, 5);
+
+            // Tạo notification cho từng user
+            for (Integer userId : allUserIds) {
+                createNotification(senderId, userId, title, message, type, actionUrl)
+                        .subscribe(
+                                notification -> log.info("Broadcast notification sent to user {}: {}", userId,
+                                        notification.getNotificationId()),
+                                error -> log.error("Failed to send broadcast notification to user {}: {}", userId,
+                                        error.getMessage()));
+            }
+
+            log.info("Broadcast notification initiated for {} users", allUserIds.size());
+
+        } catch (Exception e) {
+            log.error("Error broadcasting notification to all users: {}", e.getMessage());
+            throw new RuntimeException("Failed to broadcast notification", e);
+        }
+    }
+
 }

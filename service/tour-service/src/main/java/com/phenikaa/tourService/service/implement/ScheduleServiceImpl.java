@@ -43,6 +43,15 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    public TourSchedule getScheduleById(Integer scheduleId) {
+        Optional<TourSchedule> schedule = scheduleRepository.findById(scheduleId);
+        if (schedule.isEmpty()) {
+            throw new NotFoundException("Schedule not found with id: " + scheduleId);
+        }
+        return schedule.get();
+    }
+
+    @Override
     public void updateSchedule(Integer scheduleId, Integer availableSlots) {
         Optional<TourSchedule> schedule = scheduleRepository.findById(scheduleId);
         if (schedule.isEmpty()) {

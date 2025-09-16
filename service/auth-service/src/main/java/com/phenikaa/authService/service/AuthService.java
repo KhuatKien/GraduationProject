@@ -23,22 +23,23 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
-//    public Mono<AuthResponse> login(LoginRequest request) {
-//        return userServiceClient.verifyUser(request)
-//                .switchIfEmpty(Mono.error(new RuntimeException("User not found or password wrong!")))
-//                .flatMap(user -> {
-//                    var authorities = user.roles().stream()
-//                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-//                            .collect(Collectors.toList());
-//
-//                    String accessToken = jwtUtil.generateAccessToken(
-//                            user.userName(), user.userId(), authorities
-//                    );
-//
-//
-//                    return Mono.just(new AuthResponse(accessToken));
-//                });
-//    }
+    // public Mono<AuthResponse> login(LoginRequest request) {
+    // return userServiceClient.verifyUser(request)
+    // .switchIfEmpty(Mono.error(new RuntimeException("User not found or password
+    // wrong!")))
+    // .flatMap(user -> {
+    // var authorities = user.roles().stream()
+    // .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+    // .collect(Collectors.toList());
+    //
+    // String accessToken = jwtUtil.generateAccessToken(
+    // user.userName(), user.userId(), authorities
+    // );
+    //
+    //
+    // return Mono.just(new AuthResponse(accessToken));
+    // });
+    // }
 
     public Mono<AuthResponse> login(LoginRequest request) {
         return userServiceClient.verifyUser(request)

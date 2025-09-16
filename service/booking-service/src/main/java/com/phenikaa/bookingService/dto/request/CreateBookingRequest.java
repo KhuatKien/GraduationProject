@@ -10,6 +10,7 @@ public class CreateBookingRequest {
     private String bookingCode;
     private Integer adultCount;
     private Integer childCount;
+    private String promotionCode;
     private BookingStatus status;
     private Instant createdAt;
     private Instant updatedAt;

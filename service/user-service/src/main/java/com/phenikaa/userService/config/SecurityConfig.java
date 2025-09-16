@@ -19,36 +19,37 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-//    private final CustomUserDetailsService userDetailsService;
+    // private final CustomUserDetailsService userDetailsService;
 
-    private final GatewayHeaderAuthFilter gatewayHeaderAuthFilter ;
+    private final GatewayHeaderAuthFilter gatewayHeaderAuthFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.disable()) // Disable CORS để tránh conflict với API Gateway
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/internal/users/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-//    @Bean
-//    public AuthenticationProvider authenticationProvider() {
-//        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-//        provider.setUserDetailsService(userDetailsService);
-//        provider.setPasswordEncoder(new BCryptPasswordEncoder());
-//        return provider;
-//    }
-//
-//    @Bean
-//    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-//        return config.getAuthenticationManager();
-//    }
+    // @Bean
+    // public AuthenticationProvider authenticationProvider() {
+    // DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+    // provider.setUserDetailsService(userDetailsService);
+    // provider.setPasswordEncoder(new BCryptPasswordEncoder());
+    // return provider;
+    // }
+    //
+    // @Bean
+    // public AuthenticationManager
+    // authenticationManager(AuthenticationConfiguration config) throws Exception {
+    // return config.getAuthenticationManager();
+    // }
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
