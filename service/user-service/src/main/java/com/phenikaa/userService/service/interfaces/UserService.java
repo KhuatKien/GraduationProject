@@ -8,6 +8,8 @@ import com.phenikaa.userService.dto.request.UpdateUserStatusRequest;
 import com.phenikaa.userService.dto.response.AdminUserResponse;
 import com.phenikaa.userService.dto.response.ProfileResponse;
 import com.phenikaa.userService.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -30,6 +32,8 @@ public interface UserService {
 
     // Admin methods
     List<AdminUserResponse> getAllUsers();
+
+    Page<AdminUserResponse> getAllUsers(Pageable pageable, String search, String status);
 
     Optional<AdminUserResponse> getUserDetailsForAdmin(Integer userId);
 

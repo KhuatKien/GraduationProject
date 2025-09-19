@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,7 +17,8 @@ public class SearchTourCriteria {
 
     // Status and category
     private TourStatus status;
-    private String categoryName;
+    private String categoryName; // Keep for backward compatibility
+    private List<String> categoryNames; // New field for multiple categories
 
     // Price range
     private Double minPrice;
@@ -33,4 +36,12 @@ public class SearchTourCriteria {
     // Date range (optional)
     private String createdAfter;
     private String createdBefore;
+
+    // Schedule date range
+    private String departureDate;
+    private String returnDate;
+
+    // Rating filter
+    private Integer minRating;
+    private Integer maxRating;
 }

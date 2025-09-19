@@ -21,10 +21,12 @@ public class BookingAdminController {
 
     @GetMapping("/getAllBookings")
     public ResponseEntity<Page<AdminBookingResponse>> getAllBookings(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<AdminBookingResponse> bookings = bookingService.getAllBookings(pageable);
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AdminBookingResponse> bookings = bookingService.getAllBookings(pageable, search, status);
         return ResponseEntity.ok(bookings);
     }
 
@@ -51,5 +53,15 @@ public class BookingAdminController {
     public ResponseEntity<BookingStatsResponse> getBookingStats() {
         BookingStatsResponse stats = bookingService.getBookingStats();
         return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/getTourBookedCount/{tourId}")
+    public ResponseEntity<Long> getTourBookedCount(@PathVariable("tourId") Integer tourId) {
+        try {
+            Long bookedCount = bookingService.getTourBookedCount(tourId);
+            return ResponseEntity.ok(bookedCount);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(0L);
+        }
     }
 }

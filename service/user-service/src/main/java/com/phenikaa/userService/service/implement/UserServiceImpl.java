@@ -17,6 +17,8 @@ import com.phenikaa.userService.repository.UserRepository;
 import com.phenikaa.userService.service.interfaces.CloudinaryService;
 import com.phenikaa.userService.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -268,6 +270,33 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream()
                 .map(this::mapToAdminUserResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<AdminUserResponse> getAllUsers(Pageable pageable, String search, String status) {
+        AccountStatus accountStatus = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                accountStatus = AccountStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // If status is invalid, ignore it and search without status filter
+                System.out.println("Invalid status: " + status);
+            }
+        }
+
+        if (search != null && !search.isEmpty()) {
+            // Search by name, email, or username
+            return userRepository.findBySearchAndStatus(search, accountStatus, pageable)
+                    .map(this::mapToAdminUserResponse);
+        } else if (accountStatus != null) {
+            // Filter by status only
+            return userRepository.findByStatus(accountStatus, pageable)
+                    .map(this::mapToAdminUserResponse);
+        } else {
+            // Get all users with pagination
+            return userRepository.findAll(pageable)
+                    .map(this::mapToAdminUserResponse);
+        }
     }
 
     @Override

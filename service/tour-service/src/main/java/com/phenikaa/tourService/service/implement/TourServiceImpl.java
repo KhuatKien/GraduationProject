@@ -115,8 +115,25 @@ public class TourServiceImpl implements TourService {
         // Thực hiện search với Specification
         Page<Tour> tourPage = tourRepository.findAll(spec, pageable);
 
-        // Convert to DTO
-        return tourPage.map(viewTourMapper::toDto);
+        // Map tours with additional statistics (same as getAllTours)
+        List<ViewTourResponse> toursWithStats = tourPage.getContent().stream()
+                .map(tour -> {
+                    // Get review statistics
+                    Double averageRating = tourRepository.getAverageRatingByTourId(tour.getTourId());
+                    Long reviewCount = tourRepository.countByTourId(tour.getTourId());
+
+                    // Map basic tour data
+                    ViewTourResponse response = viewTourMapper.toDto(tour);
+
+                    // Set additional statistics
+                    response.setAverageRating(averageRating != null ? averageRating : 0.0);
+                    response.setReviewCount(reviewCount);
+
+                    return response;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(toursWithStats, pageable, tourPage.getTotalElements());
     }
 
     @Override

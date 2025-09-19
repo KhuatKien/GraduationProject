@@ -110,4 +110,18 @@ public class PromotionUserController {
         }
     }
 
+    // Endpoint để test manual cập nhật status promotions
+    @PostMapping("/admin/updatePromotionStatuses")
+    public ResponseEntity<?> updatePromotionStatuses() {
+        try {
+            log.info("Manual update promotion statuses requested");
+            int updatedCount = promotionService.updateExpiredPromotions();
+            return ResponseEntity
+                    .ok("Promotion statuses updated successfully. Updated " + updatedCount + " expired promotions");
+        } catch (Exception e) {
+            log.error("Error updating promotion statuses: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Error updating promotion statuses: " + e.getMessage());
+        }
+    }
+
 }

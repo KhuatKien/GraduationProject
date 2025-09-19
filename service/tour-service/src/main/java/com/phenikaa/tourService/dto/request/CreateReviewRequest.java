@@ -24,3 +24,4 @@ public class CreateReviewRequest {
     @Size(max = 1000, message = "Comment không được vượt quá 1000 ký tự")
     private String comment;
 }
+

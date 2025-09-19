@@ -14,4 +14,10 @@ public interface ScheduleService {
     TourSchedule getScheduleById(Integer scheduleId);
 
     void updateSchedule(Integer scheduleId, Integer availableSlots);
+
+    // Method để tự động cập nhật status schedule
+    void updateScheduleStatuses();
+
+    // Method để lấy schedules có status ACTIVE và FULL
+    List<ViewTourScheduleResponse> getActiveAndFullSchedulesByTourId(Integer tourId);
 }

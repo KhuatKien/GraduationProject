@@ -1,6 +1,7 @@
 package com.phenikaa.tourService.controller;
 
 import com.phenikaa.dto.response.GetInfoTour;
+import com.phenikaa.tourService.dto.request.SearchTourCriteria;
 import com.phenikaa.tourService.dto.response.ViewTourResponse;
 import com.phenikaa.tourService.dto.response.ViewTourScheduleResponse;
 import com.phenikaa.dto.response.ScheduleInfoResponse;
@@ -101,6 +102,16 @@ public class TourUserController {
         Pageable pageable = PageRequest.of(page - 1, size, sort);
         Page<TourSummaryProjection> tours = tourService.getAllActiveToursSummary(pageable);
 
+        return ResponseEntity.ok(tours);
+    }
+
+    @PostMapping("/search/dynamic")
+    public ResponseEntity<Page<ViewTourResponse>> searchToursDynamic(
+            @RequestBody SearchTourCriteria criteria,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<ViewTourResponse> tours = tourService.searchToursBySpecification(criteria, pageable);
         return ResponseEntity.ok(tours);
     }
 

@@ -33,4 +33,9 @@ public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
         @Query("SELECT p FROM Promotion p WHERE p.status = 'ACTIVE' " +
                         "AND p.startDate <= :currentTime AND p.endDate >= :currentTime")
         List<Promotion> findActivePromotions(@Param("currentTime") Instant currentTime);
+
+        // Tìm tất cả promotion active (bao gồm cả chưa bắt đầu)
+        @Query("SELECT p FROM Promotion p WHERE p.status = 'ACTIVE' " +
+                        "AND p.endDate >= :currentTime")
+        List<Promotion> findAllActivePromotions(@Param("currentTime") Instant currentTime);
 }

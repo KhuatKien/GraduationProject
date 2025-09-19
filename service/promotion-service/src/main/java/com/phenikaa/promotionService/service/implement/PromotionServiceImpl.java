@@ -70,7 +70,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public List<Promotion> getActivePromotions() {
-        return promotionRepository.findActivePromotions(Instant.now());
+        return promotionRepository.findAllActivePromotions(Instant.now());
     }
 
     @Override

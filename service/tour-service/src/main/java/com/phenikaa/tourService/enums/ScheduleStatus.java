@@ -1,5 +1,5 @@
 package com.phenikaa.tourService.enums;
 
 public enum ScheduleStatus {
-    AVAILABLE, FULL, CANCELLED
+    AVAILABLE, FULL, EXPIRED, CANCELLED
 }

@@ -5,6 +5,9 @@ import com.phenikaa.userService.dto.response.AdminUserResponse;
 import com.phenikaa.userService.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,8 +25,13 @@ public class AdminController {
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AdminUserResponse>> getAllUsers() {
-        List<AdminUserResponse> users = userService.getAllUsers();
+    public ResponseEntity<Page<AdminUserResponse>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AdminUserResponse> users = userService.getAllUsers(pageable, search, status);
         return ResponseEntity.ok(users);
     }
 

@@ -14,6 +14,8 @@ public interface BookingService {
 
     Page<AdminBookingResponse> getAllBookings(Pageable pageable);
 
+    Page<AdminBookingResponse> getAllBookings(Pageable pageable, String search, String status);
+
     void deleteBooking(Integer bookingId);
 
     Booking updateBookingStatus(Integer bookingId, BookingStatus status);
@@ -26,4 +28,7 @@ public interface BookingService {
 
     // Thống kê bookings
     BookingStatsResponse getBookingStats();
+
+    // Lấy số lần đặt tour cho một tour cụ thể
+    Long getTourBookedCount(Integer tourId);
 }

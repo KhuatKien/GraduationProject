@@ -28,6 +28,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -143,6 +146,23 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public Page<AdminBookingResponse> getAllBookings(Pageable pageable) {
         Page<Booking> bookingPage = bookingRepository.findAll(pageable);
+        return bookingPage.map(this::mapToAdminResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminBookingResponse> getAllBookings(Pageable pageable, String search, String status) {
+        BookingStatus bookingStatus = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                bookingStatus = BookingStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // If status is invalid, ignore it and search without status filter
+                System.out.println("Invalid status: " + status);
+            }
+        }
+
+        Page<Booking> bookingPage = bookingRepository.findBySearchAndStatus(search, bookingStatus, pageable);
         return bookingPage.map(this::mapToAdminResponse);
     }
 
@@ -404,6 +424,53 @@ public class BookingServiceImpl implements BookingService {
                 .refunded(0L) // Not available in current enum
                 .completed(completed)
                 .build();
+    }
+
+    @Override
+    public Long getTourBookedCount(Integer tourId) {
+        try {
+            // Bước 1: Lấy danh sách schedule IDs của tour từ tour service
+            List<Integer> scheduleIds = getScheduleIdsForTour(tourId);
+
+            if (scheduleIds.isEmpty()) {
+                System.out.println("No schedules found for tourId: " + tourId);
+                return 0L;
+            }
+
+            // Bước 2: Đếm bookings theo schedule IDs
+            Long count = bookingRepository.countByScheduleIdsAndValidStatus(scheduleIds);
+            return count != null ? count : 0L;
+        } catch (Exception e) {
+            System.err.println("Error getting tour booked count for tourId " + tourId + ": " + e.getMessage());
+            return 0L;
+        }
+    }
+
+    private List<Integer> getScheduleIdsForTour(Integer tourId) {
+        try {
+            System.out.println("Getting schedule IDs for tourId: " + tourId);
+
+            // Gọi tour service để lấy danh sách schedules
+            List<ScheduleInfoResponse> schedules = tourServiceClient.getAllSchedules(tourId);
+
+            if (schedules == null || schedules.isEmpty()) {
+                System.out.println("No schedules found for tourId: " + tourId);
+                return new ArrayList<>();
+            }
+
+            // Extract schedule IDs
+            List<Integer> scheduleIds = schedules.stream()
+                    .map(ScheduleInfoResponse::getScheduleId)
+                    .collect(java.util.stream.Collectors.toList());
+
+            System.out.println("Found " + scheduleIds.size() + " schedules for tourId: " + tourId);
+            System.out.println("Schedule IDs: " + scheduleIds);
+
+            return scheduleIds;
+        } catch (Exception e) {
+            System.err.println("Error getting schedule IDs for tourId " + tourId + ": " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
 }
