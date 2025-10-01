@@ -22,7 +22,7 @@ public class PromotionUsage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
+    @Column(name = "discount_amount", nullable = false)
     @NotNull(message = "Discount amount is required")
     @PositiveOrZero(message = "Discount amount must be positive or zero")
     private Double discountAmount;

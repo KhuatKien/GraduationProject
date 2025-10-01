@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.disable()) // Disable CORS để tránh conflict với API Gateway
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/internal/users/**").permitAll()
+                        .requestMatchers("/api/internal/users/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(gatewayHeaderAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

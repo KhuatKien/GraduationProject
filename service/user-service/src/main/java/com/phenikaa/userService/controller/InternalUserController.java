@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/internal/users")
+@RequestMapping("/api/internal/users")
 @Validated
 public class InternalUserController {
 
@@ -24,9 +24,16 @@ public class InternalUserController {
     private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        User savedUser = userService.save(registerRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        try {
+            User savedUser = userService.save(registerRequest);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while registering user");
+        }
     }
 
     @PostMapping("/verify")

@@ -20,7 +20,7 @@ public class UserServiceClient {
                 return webClientBuilder.baseUrl(userServiceUrl)
                                 .build()
                                 .post()
-                                .uri("/internal/users/verify")
+                                .uri("/api/internal/users/verify")
                                 .bodyValue(request)
                                 .retrieve()
                                 .bodyToMono(UserInfoResponse.class);
@@ -30,7 +30,7 @@ public class UserServiceClient {
                 return webClientBuilder.baseUrl(userServiceUrl)
                                 .build()
                                 .post()
-                                .uri("/internal/users/saveRefreshToken")
+                                .uri("/api/internal/users/saveRefreshToken")
                                 .bodyValue(request)
                                 .retrieve()
                                 .toBodilessEntity()
@@ -42,7 +42,7 @@ public class UserServiceClient {
                                 .build()
                                 .delete()
                                 .uri(uriBuilder -> uriBuilder
-                                                .path("/internal/users/deleteRefreshToken")
+                                                .path("/api/internal/users/deleteRefreshToken")
                                                 .queryParam("token", refreshToken)
                                                 .build())
                                 .retrieve()
@@ -55,7 +55,7 @@ public class UserServiceClient {
                                 .build()
                                 .get()
                                 .uri(uriBuilder -> uriBuilder
-                                                .path("/internal/users/getUserByRefreshToken")
+                                                .path("/api/internal/users/getUserByRefreshToken")
                                                 .queryParam("token", refreshToken)
                                                 .build())
                                 .retrieve()

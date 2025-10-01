@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,16 +17,17 @@ import java.time.LocalDateTime;
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "payment_id", nullable = false, updatable = false)
+    private Integer paymentId;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "payment_code", unique = true, nullable = false)
     private String paymentCode;
 
-    @Column(nullable = false)
-    private Long bookingId; // Reference to Booking Service
+    @Column(name = "booking_id", nullable = false)
+    private Integer bookingId; // Reference to Booking Service
 
-    @Column(nullable = false)
-    private Long userId; // Reference to User Service
+    @Column(name = "user_id", nullable = false)
+    private Integer userId; // Reference to User Service
 
     @Column(nullable = false)
     private Double amount;
@@ -34,14 +36,15 @@ public class Payment {
     private PaymentMethod method; // MOMO, ZALOPAY, BANK_TRANSFER, CREDIT_CARD, QR_CODE
 
     @Enumerated(EnumType.STRING)
-    private PaymentStatus status; // PENDING, COMPLETED, FAILED, REFUNDED
+    private PaymentStatus status; // PENDING, COMPLETED, FAILED
 
+    @Column(name = "transaction_id")
     private String transactionId;
+
+    @Column(name = "gateway_response")
     private String gatewayResponse;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    private LocalDateTime paidAt;
-    private LocalDateTime refundedAt;
+    @Column(name = "paid_at", nullable = false, updatable = false)
+    private Instant paidAt;
 }

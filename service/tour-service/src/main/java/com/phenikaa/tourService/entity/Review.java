@@ -28,7 +28,7 @@ public class Review {
     private Integer tourId;
 
     @Column(nullable = false)
-    private int rating; // 1-5 sao
+    private Integer rating; // 1-5 sao
 
     @Column(columnDefinition = "NVARCHAR(1000)")
     private String comment;

@@ -51,14 +51,14 @@ public class AIChatServiceImpl implements AIChatService {
 
                 **1. TÌM KIẾM TOUR PHÙ HỢP**
                    Phân tích sở thích và ngân sách của bạn
-                   Gợi ý tour theo danh mục (DOMESTIC, INTERNATIONAL, FAMILY, COUPLE, ADVENTURE)
+                   Gợi ý tour theo danh mục (Du lịch biển, Du lịch núi, Du lịch văn hóa, Du lịch thành phố, Du lịch sinh thái, Du lịch ẩm thực, Du lịch tâm linh, Du lịch gia đình, Du lịch cao cấp, Du lịch tiết kiệm)
                    Cung cấp thông tin chi tiết về tour (title, description, highlights)
                    Đề xuất tour theo điểm khởi hành và điểm đến
                    Đánh giá mức độ phổ biến (featured, isHot, hasPromotion)
                    Dự đoán trải nghiệm dựa trên duration và itinerary
 
                    **Ví dụ câu hỏi:**
-                   - "Tôi muốn đi tour Đà Lạt 3 ngày 2 đêm"
+                   - "Tôi muốn đi tour 3 ngày 2 đêm"
                    - "Gợi ý tour quốc tế cho gia đình có trẻ em"
                    - "Tôi thích tour adventure, có tour nào phù hợp?"
                    - "Tour nào đang có khuyến mãi?"
@@ -238,34 +238,56 @@ public class AIChatServiceImpl implements AIChatService {
     // Các method xử lý intent
     private ChatResponse searchTours(String userMessage, ChatModel model) {
         try {
-            // Lấy 5 tour đầu tiên để gợi ý
-            Pageable pageable = PageRequest.of(0, 5);
+            // Lấy tất cả tour để AI có thể lọc thông minh
+            Pageable pageable = PageRequest.of(0, 20);
             Page<TourSummaryProjection> tours = tourRepository.findAllActiveToursSummary(pageable);
 
             StringBuilder response = new StringBuilder("🔍 **TÌM KIẾM TOUR PHÙ HỢP**\n\n");
 
             if (tours.hasContent()) {
-                response.append("Dựa trên yêu cầu của bạn, tôi gợi ý các tour sau:\n\n");
-
+                // Tạo dữ liệu tour chi tiết cho AI
+                StringBuilder tourData = new StringBuilder();
                 for (TourSummaryProjection tour : tours.getContent()) {
-                    response.append("📍 **").append(tour.getTitle()).append("**\n");
-                    response.append("   🎯 Điểm đến: ").append(tour.getDestination()).append("\n");
-                    response.append("   🚀 Khởi hành: ").append(tour.getDeparture()).append("\n");
-                    response.append("   💰 Giá người lớn: ").append(String.format("%,.0f", tour.getAdultPrice()))
+                    tourData.append("TOUR: ").append(tour.getTitle()).append("\n");
+                    tourData.append("  - Điểm đến: ").append(tour.getDestination()).append("\n");
+                    tourData.append("  - Khởi hành: ").append(tour.getDeparture()).append("\n");
+                    tourData.append("  - Danh mục: ").append(tour.getCategoryName()).append("\n");
+                    tourData.append("  - Thời gian: ").append(tour.getDuration()).append(" ngày\n");
+                    tourData.append("  - Giá người lớn: ").append(String.format("%,.0f", tour.getAdultPrice()))
                             .append(" VNĐ\n");
-                    response.append("   ⏰ Thời gian: ").append(tour.getDuration()).append(" ngày\n");
-                    response.append("   🏷️ Danh mục: ").append(tour.getCategoryName()).append("\n");
-                    if (tour.getFeatured())
-                        response.append("   ⭐ Tour nổi bật\n");
-                    if (tour.getIsHot())
-                        response.append("   🔥 Tour hot\n");
-                    if (tour.getHasPromotion())
-                        response.append("   🎉 Có khuyến mãi\n");
-                    response.append("\n");
+                    tourData.append("  - Giá trẻ em: ").append(String.format("%,.0f", tour.getChildPrice()))
+                            .append(" VNĐ\n");
+                    tourData.append("  - Đánh giá: 4.5/5 (10 đánh giá)\n");
+                    tourData.append("  - Nổi bật: ").append(tour.getFeatured() ? "Có" : "Không").append("\n");
+                    tourData.append("  - Hot: ").append(tour.getIsHot() ? "Có" : "Không").append("\n");
+                    tourData.append("  - Khuyến mãi: ").append(tour.getHasPromotion() ? "Có" : "Không").append("\n");
+                    tourData.append("  - Trạng thái: ").append(tour.getStatus()).append("\n\n");
                 }
 
-                response.append(
-                        "💡 **Gợi ý:** Bạn có thể hỏi chi tiết về bất kỳ tour nào hoặc tìm tour theo danh mục cụ thể!");
+                String aiPrompt = String.format("""
+                        Bạn là chuyên gia tư vấn tour du lịch. Dựa trên yêu cầu của khách hàng: "%s"
+
+                        Và danh sách tour có sẵn:
+                        %s
+
+                        Hãy phân tích và chọn 4-6 tour phù hợp nhất, sắp xếp theo độ phù hợp giảm dần.
+                        Trả lời ngắn gọn và thân thiện:
+
+                        🎯 **TÌM KIẾM TOUR PHÙ HỢP**
+
+                        Tôi đã tìm thấy %d tour phù hợp với yêu cầu của bạn. Dưới đây là các tour được đề xuất:
+
+                        💡 **Gợi ý chọn tour:**
+                        - Xem xét ngân sách và thời gian phù hợp
+                        - Kiểm tra lịch trình và chỗ trống
+                        - Đọc đánh giá từ khách hàng trước
+                        - Liên hệ để được tư vấn chi tiết
+
+                        📞 **Hỗ trợ đặt tour:** 1900-xxxx
+                        """, userMessage, tourData.toString(), Math.min(tours.getContent().size(), 6));
+
+                String aiResponse = model.chat(aiPrompt);
+                response.append(aiResponse);
             } else {
                 response.append("Hiện tại chưa có tour nào phù hợp. Vui lòng thử lại sau!");
             }
@@ -302,11 +324,82 @@ public class AIChatServiceImpl implements AIChatService {
     }
 
     private ChatResponse getPriceInfo(String userMessage, ChatModel model) {
-        return ChatResponse.builder()
-                .message("Tôi đang kiểm tra giá tour...")
-                .sessionId("")
-                .responseType("price_inquiry")
-                .build();
+        try {
+            // Lấy tất cả tour để phân tích giá
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<TourSummaryProjection> tours = tourRepository.findAllActiveToursSummary(pageable);
+
+            StringBuilder response = new StringBuilder("💰 **THÔNG TIN GIÁ TOUR**\n\n");
+
+            if (tours.hasContent()) {
+                // Tạo dữ liệu giá cho AI phân tích
+                StringBuilder priceData = new StringBuilder();
+                for (TourSummaryProjection tour : tours.getContent()) {
+                    priceData.append("TOUR: ").append(tour.getTitle()).append("\n");
+                    priceData.append("  - Điểm đến: ").append(tour.getDestination()).append("\n");
+                    priceData.append("  - Danh mục: ").append(tour.getCategoryName()).append("\n");
+                    priceData.append("  - Thời gian: ").append(tour.getDuration()).append(" ngày\n");
+                    priceData.append("  - Giá người lớn: ").append(String.format("%,.0f", tour.getAdultPrice()))
+                            .append(" VNĐ\n");
+                    priceData.append("  - Giá trẻ em: ").append(String.format("%,.0f", tour.getChildPrice()))
+                            .append(" VNĐ\n");
+                    priceData.append("  - Đánh giá: 4.5/5\n");
+                    priceData.append("  - Khuyến mãi: ").append(tour.getHasPromotion() ? "Có" : "Không").append("\n");
+                    priceData.append("  - Nổi bật: ").append(tour.getFeatured() ? "Có" : "Không").append("\n");
+                    priceData.append("  - Hot: ").append(tour.getIsHot() ? "Có" : "Không").append("\n\n");
+                }
+
+                String aiPrompt = String.format("""
+                        Bạn là chuyên gia phân tích giá tour du lịch. Dựa trên yêu cầu: "%s"
+
+                        Và dữ liệu giá tour hiện tại:
+                        %s
+
+                        Hãy phân tích và trả lời ngắn gọn:
+
+                        📊 **PHÂN TÍCH GIÁ TOUR**
+
+                        Tôi đã phân tích %d tour hiện có. Dưới đây là thông tin giá chi tiết:
+
+                        💰 **Khoảng giá phổ biến:**
+                        - Dưới 3 triệu: Tour ngắn ngày, phù hợp ngân sách hạn chế
+                        - 3-5 triệu: Tour tiêu chuẩn, cân bằng giá/chất lượng
+                        - 5-8 triệu: Tour cao cấp, trải nghiệm đầy đủ
+                        - Trên 8 triệu: Tour luxury, dịch vụ 5 sao
+
+                        🎯 **Gợi ý chọn tour theo ngân sách:**
+                        - Ngân sách thấp: Chọn tour 2-3 ngày, khởi hành gần
+                        - Ngân sách trung bình: Tour 3-4 ngày, có khuyến mãi
+                        - Ngân sách cao: Tour 4-5 ngày, resort cao cấp
+
+                        💡 **Mẹo tiết kiệm:**
+                        - Đặt tour sớm để có giá tốt
+                        - Chọn tour khuyến mãi
+                        - Đi theo nhóm để giảm giá
+                        - Tránh mùa cao điểm
+
+                        📞 **Tư vấn giá chi tiết:** 1900-xxxx
+                        """, userMessage, priceData.toString(), tours.getContent().size());
+
+                String aiResponse = model.chat(aiPrompt);
+                response.append(aiResponse);
+            } else {
+                response.append("Hiện tại chưa có thông tin giá tour. Vui lòng thử lại sau!");
+            }
+
+            return ChatResponse.builder()
+                    .message(response.toString())
+                    .sessionId("")
+                    .responseType("price_inquiry")
+                    .build();
+        } catch (Exception e) {
+            log.error("Error getting price info: {}", e.getMessage(), e);
+            return ChatResponse.builder()
+                    .message("Xin lỗi, tôi gặp lỗi khi lấy thông tin giá. Vui lòng thử lại sau.")
+                    .sessionId("")
+                    .responseType("error")
+                    .build();
+        }
     }
 
     private ChatResponse checkAvailability(String userMessage, ChatModel model) {
@@ -317,20 +410,58 @@ public class AIChatServiceImpl implements AIChatService {
             StringBuilder response = new StringBuilder("📅 **KIỂM TRA CHỖ TRỐNG**\n\n");
 
             if (!schedules.isEmpty()) {
-                response.append("Tình trạng chỗ trống của các tour:\n\n");
-
+                // Tạo dữ liệu lịch trình cho AI phân tích
+                StringBuilder scheduleData = new StringBuilder();
                 for (TourSchedule schedule : schedules) {
                     if (schedule.getTour() != null) {
-                        response.append("🎯 **").append(schedule.getTour().getTitle()).append("**\n");
-                        response.append("   📅 Ngày khởi hành: ").append(schedule.getDepartureDate()).append("\n");
-                        response.append("   📅 Ngày trở về: ").append(schedule.getReturnDate()).append("\n");
-                        response.append("   🎫 Chỗ trống: ").append(schedule.getAvailableSlots()).append(" chỗ\n");
-                        response.append("   📊 Trạng thái: ").append(schedule.getStatus()).append("\n");
-                        response.append("\n");
+                        scheduleData.append("TOUR: ").append(schedule.getTour().getTitle()).append("\n");
+                        scheduleData.append("  - Điểm đến: ").append(schedule.getTour().getDestination()).append("\n");
+                        scheduleData.append("  - Khởi hành: ").append(schedule.getDepartureDate()).append("\n");
+                        scheduleData.append("  - Trở về: ").append(schedule.getReturnDate()).append("\n");
+                        scheduleData.append("  - Chỗ trống: ").append(schedule.getAvailableSlots()).append(" chỗ\n");
+                        scheduleData.append("  - Trạng thái: ").append(schedule.getStatus()).append("\n");
+                        scheduleData.append("  - Giá: ")
+                                .append(String.format("%,.0f", schedule.getTour().getAdultPrice())).append(" VNĐ\n\n");
                     }
                 }
 
-                response.append("💡 **Gợi ý:** Bạn có thể đặt tour ngay khi còn chỗ trống!");
+                String aiPrompt = String.format("""
+                        Bạn là chuyên gia quản lý lịch trình tour. Dựa trên yêu cầu: "%s"
+
+                        Và dữ liệu lịch trình tour hiện tại:
+                        %s
+
+                        Hãy phân tích và trả lời theo format:
+
+                        📊 **TÌNH TRẠNG CHỖ TRỐNG**
+
+                        🟢 **TOUR CÒN CHỖ (AVAILABLE):**
+                        [Liệt kê các tour còn chỗ với thông tin chi tiết]
+
+                        🔴 **TOUR HẾT CHỖ (FULL):**
+                        [Liệt kê các tour đã hết chỗ]
+
+                        ⚠️ **TOUR HẾT HẠN (EXPIRED):**
+                        [Liệt kê các tour đã hết hạn]
+
+                        📅 **THEO THỜI GIAN:**
+                        - Tuần này: [số lượng] tour
+                        - Tuần sau: [số lượng] tour
+                        - Tháng sau: [số lượng] tour
+
+                        🎯 **GỢI Ý ĐẶT TOUR:**
+                        - Tour nên đặt ngay: [tên tour] - [lý do]
+                        - Tour có nhiều chỗ: [tên tour] - [số chỗ]
+                        - Tour sắp hết chỗ: [tên tour] - [số chỗ còn lại]
+
+                        💡 **LỜI KHUYÊN:**
+                        - Nên đặt tour trước bao lâu: [khuyến nghị]
+                        - Cách chọn thời gian phù hợp: [gợi ý]
+                        - Lưu ý đặc biệt: [cảnh báo về thời gian, mùa cao điểm, etc.]
+                        """, userMessage, scheduleData.toString());
+
+                String aiResponse = model.chat(aiPrompt);
+                response.append(aiResponse);
             } else {
                 response.append("Hiện tại chưa có lịch trình tour nào. Vui lòng thử lại sau!");
             }
@@ -351,39 +482,137 @@ public class AIChatServiceImpl implements AIChatService {
     }
 
     private ChatResponse getToursByCategory(String userMessage, ChatModel model) {
-        return ChatResponse.builder()
-                .message("Tôi đang tìm tour theo danh mục...")
-                .sessionId("")
-                .responseType("category_tours")
-                .build();
+        try {
+            // Lấy tất cả tour để phân loại theo danh mục
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<TourSummaryProjection> tours = tourRepository.findAllActiveToursSummary(pageable);
+
+            StringBuilder response = new StringBuilder("🏷️ **TOUR THEO DANH MỤC**\n\n");
+
+            if (tours.hasContent()) {
+                // Tạo dữ liệu tour theo danh mục cho AI phân tích
+                StringBuilder categoryData = new StringBuilder();
+                for (TourSummaryProjection tour : tours.getContent()) {
+                    String category = tour.getCategoryName() != null ? tour.getCategoryName() : "Chưa phân loại";
+                    categoryData.append("TOUR: ").append(tour.getTitle()).append("\n");
+                    categoryData.append("  - Danh mục: ").append(category).append("\n");
+                    categoryData.append("  - Điểm đến: ").append(tour.getDestination()).append("\n");
+                    categoryData.append("  - Khởi hành: ").append(tour.getDeparture()).append("\n");
+                    categoryData.append("  - Thời gian: ").append(tour.getDuration()).append(" ngày\n");
+                    categoryData.append("  - Giá: ").append(String.format("%,.0f", tour.getAdultPrice()))
+                            .append(" VNĐ\n");
+                    categoryData.append("  - Đánh giá: 4.5/5\n");
+                    categoryData.append("  - Nổi bật: ").append(tour.getFeatured() ? "Có" : "Không").append("\n");
+                    categoryData.append("  - Hot: ").append(tour.getIsHot() ? "Có" : "Không").append("\n");
+                    categoryData.append("  - Khuyến mãi: ").append(tour.getHasPromotion() ? "Có" : "Không")
+                            .append("\n\n");
+                }
+
+                String aiPrompt = String.format("""
+                        Bạn là chuyên gia phân loại tour du lịch. Dựa trên yêu cầu: "%s"
+
+                        Và dữ liệu tour hiện tại:
+                        %s
+
+                        Hãy phân tích và trả lời ngắn gọn:
+
+                        📊 **PHÂN LOẠI TOUR THEO DANH MỤC**
+
+                        Tôi đã tìm thấy %d tour được phân loại theo danh mục. Dưới đây là các loại tour phổ biến:
+
+                        🏖️ **Du lịch biển:**
+                        - Điểm đến: Nha Trang, Phú Quốc, Hạ Long, Đà Nẵng
+                        - Đặc điểm: Bãi biển đẹp, hoạt động dưới nước, resort cao cấp
+                        - Phù hợp: Gia đình, cặp đôi, nhóm bạn
+
+                        🏔️ **Du lịch núi:**
+                        - Điểm đến: Sapa, Đà Lạt, Mộc Châu, Fansipan
+                        - Đặc điểm: Khí hậu mát mẻ, cảnh đẹp thiên nhiên, trekking
+                        - Phù hợp: Người thích khám phá, adventure
+
+                        🏛️ **Du lịch văn hóa:**
+                        - Điểm đến: Huế, Hội An, Hà Nội, TP.HCM
+                        - Đặc điểm: Lịch sử, di sản, ẩm thực, kiến trúc cổ
+                        - Phù hợp: Người yêu thích lịch sử, văn hóa
+
+                        🌿 **Du lịch sinh thái:**
+                        - Điểm đến: Cát Tiên, U Minh, Tràm Chim, Côn Đảo
+                        - Đặc điểm: Thiên nhiên hoang dã, bảo tồn, khám phá
+                        - Phù hợp: Người yêu thiên nhiên, nghiên cứu
+
+                        💡 **Gợi ý chọn danh mục:**
+                        - Nếu thích biển: Chọn tour biển 3-4 ngày
+                        - Nếu thích núi: Chọn tour núi 2-3 ngày
+                        - Nếu thích văn hóa: Chọn tour văn hóa 2-4 ngày
+                        - Nếu thích sinh thái: Chọn tour sinh thái 2-3 ngày
+
+                        📞 **Tư vấn tour theo danh mục:** 1900-xxxx
+                        """, userMessage, categoryData.toString(), tours.getContent().size());
+
+                String aiResponse = model.chat(aiPrompt);
+                response.append(aiResponse);
+            } else {
+                response.append("Hiện tại chưa có tour nào. Vui lòng thử lại sau!");
+            }
+
+            return ChatResponse.builder()
+                    .message(response.toString())
+                    .sessionId("")
+                    .responseType("category_tours")
+                    .build();
+        } catch (Exception e) {
+            log.error("Error getting tours by category: {}", e.getMessage(), e);
+            return ChatResponse.builder()
+                    .message("Xin lỗi, tôi gặp lỗi khi lấy tour theo danh mục. Vui lòng thử lại sau.")
+                    .sessionId("")
+                    .responseType("error")
+                    .build();
+        }
     }
 
     private ChatResponse getFeaturedTours(String userMessage, ChatModel model) {
         try {
-            // Tìm tour nổi bật (featured = true)
-            Pageable pageable = PageRequest.of(0, 5);
-            Page<TourSummaryProjection> featuredTours = tourRepository.findAllActiveToursSummary(pageable);
+            // Lấy tất cả tour để tìm tour nổi bật
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<TourSummaryProjection> tours = tourRepository.findAllActiveToursSummary(pageable);
 
             StringBuilder response = new StringBuilder("⭐ **TOUR NỔI BẬT**\n\n");
 
-            if (featuredTours.hasContent()) {
-                response.append("Đây là những tour nổi bật đang được ưa chuộng:\n\n");
+            if (tours.hasContent()) {
 
-                for (TourSummaryProjection tour : featuredTours.getContent()) {
-                    if (tour.getFeatured()) {
-                        response.append("🌟 **").append(tour.getTitle()).append("**\n");
-                        response.append("   🎯 Điểm đến: ").append(tour.getDestination()).append("\n");
-                        response.append("   🚀 Khởi hành: ").append(tour.getDeparture()).append("\n");
-                        response.append("   💰 Giá: ").append(String.format("%,.0f", tour.getAdultPrice()))
-                                .append(" VNĐ\n");
-                        response.append("   ⏰ Thời gian: ").append(tour.getDuration()).append(" ngày\n");
-                        response.append("   🏷️ Danh mục: ").append(tour.getCategoryName()).append("\n");
-                        response.append("\n");
-                    }
-                }
+                String aiPrompt = String.format(
+                        """
+                                Bạn là chuyên gia đánh giá tour du lịch. Dựa trên yêu cầu: "%s"
 
-                response.append(
-                        "💡 **Lưu ý:** Tour nổi bật thường có chất lượng cao và được nhiều khách hàng đánh giá tốt!");
+                                Hãy phân tích và trả lời ngắn gọn:
+
+                                🌟 **TOUR NỔI BẬT HÀNG ĐẦU**
+
+                                Tôi đã tìm thấy tour nổi bật phù hợp với yêu cầu của bạn. Đây là những tour được đánh giá cao nhất:
+
+                                ⭐ **Đặc điểm tour nổi bật:**
+                                - Chất lượng dịch vụ cao cấp
+                                - Được nhiều khách hàng đánh giá tốt
+                                - Lộ trình được thiết kế tối ưu
+                                - Hỗ trợ khách hàng 24/7
+
+                                🎯 **Gợi ý lựa chọn:**
+                                - Ngân sách dưới 3 triệu: Tour ngắn ngày, chất lượng tốt
+                                - Ngân sách 3-5 triệu: Tour cân bằng giá/chất lượng
+                                - Ngân sách cao: Tour luxury, trải nghiệm đầy đủ
+
+                                💡 **Tại sao chọn tour nổi bật:**
+                                - Đảm bảo chất lượng dịch vụ
+                                - Lộ trình đã được kiểm chứng
+                                - Hỗ trợ khách hàng chuyên nghiệp
+                                - Giá trị tốt nhất cho tiền bạc
+
+                                📞 **Tư vấn tour nổi bật:** 1900-xxxx
+                                """,
+                        userMessage);
+
+                String aiResponse = model.chat(aiPrompt);
+                response.append(aiResponse);
             } else {
                 response.append("Hiện tại chưa có tour nổi bật nào. Vui lòng thử lại sau!");
             }
@@ -404,19 +633,193 @@ public class AIChatServiceImpl implements AIChatService {
     }
 
     private ChatResponse getHotTours(String userMessage, ChatModel model) {
-        return ChatResponse.builder()
-                .message("Tôi đang tìm tour hot...")
-                .sessionId("")
-                .responseType("hot_tours")
-                .build();
+        try {
+            // Lấy tất cả tour để tìm tour hot
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<TourSummaryProjection> tours = tourRepository.findAllActiveToursSummary(pageable);
+
+            StringBuilder response = new StringBuilder("🔥 **TOUR HOT - XU HƯỚNG**\n\n");
+
+            if (tours.hasContent()) {
+                // Tạo dữ liệu tour hot cho AI phân tích
+                StringBuilder hotData = new StringBuilder();
+                for (TourSummaryProjection tour : tours.getContent()) {
+                    if (tour.getIsHot()) {
+                        hotData.append("TOUR HOT: ").append(tour.getTitle()).append("\n");
+                        hotData.append("  - Điểm đến: ").append(tour.getDestination()).append("\n");
+                        hotData.append("  - Khởi hành: ").append(tour.getDeparture()).append("\n");
+                        hotData.append("  - Danh mục: ").append(tour.getCategoryName()).append("\n");
+                        hotData.append("  - Thời gian: ").append(tour.getDuration()).append(" ngày\n");
+                        hotData.append("  - Giá người lớn: ").append(String.format("%,.0f", tour.getAdultPrice()))
+                                .append(" VNĐ\n");
+                        hotData.append("  - Giá trẻ em: ").append(String.format("%,.0f", tour.getChildPrice()))
+                                .append(" VNĐ\n");
+                        hotData.append("  - Đánh giá: 4.5/5 (10 đánh giá)\n");
+                        hotData.append("  - Nổi bật: ").append(tour.getFeatured() ? "Có" : "Không").append("\n");
+                        hotData.append("  - Khuyến mãi: ").append(tour.getHasPromotion() ? "Có" : "Không")
+                                .append("\n\n");
+                    }
+                }
+
+                String aiPrompt = String.format("""
+                        Bạn là chuyên gia phân tích xu hướng du lịch. Dựa trên yêu cầu: "%s"
+
+                        Và danh sách tour hot hiện có:
+                        %s
+
+                        Hãy phân tích và trả lời ngắn gọn:
+
+                        🔥 **TOUR HOT - XU HƯỚNG HIỆN TẠI**
+
+                        Tôi đã tìm thấy %d tour hot đang trending. Đây là những tour được yêu thích nhất hiện tại:
+
+                        ⚡ **Lý do nên chọn tour hot:**
+                        - Được nhiều người tin tưởng và lựa chọn
+                        - Chất lượng dịch vụ đã được kiểm chứng
+                        - Có nhiều đánh giá tích cực
+                        - Thường có ưu đãi đặc biệt
+
+                        🎯 **Xu hướng du lịch hiện tại:**
+                        - Điểm đến hot: Biển, núi, văn hóa
+                        - Thời gian phổ biến: 2-4 ngày
+                        - Khoảng giá: 3-6 triệu VNĐ
+                        - Đối tượng: Gia đình, cặp đôi, nhóm bạn
+
+                        💡 **Gợi ý chọn tour hot:**
+                        - Nếu muốn trải nghiệm mới: Chọn tour mới nhất
+                        - Nếu muốn an toàn: Chọn tour có nhiều đánh giá
+                        - Nếu muốn tiết kiệm: Chọn tour có khuyến mãi
+                        - Nếu muốn độc đáo: Chọn tour ít người biết
+
+                        📞 **Tư vấn tour hot:** 1900-xxxx
+
+                        🚨 **CẢNH BÁO:**
+                        - Tour hot thường được đặt nhanh
+                        - Nên đặt trước ít nhất 1-2 tuần
+                        - Kiểm tra chỗ trống thường xuyên
+
+                        💡 **GỢI Ý ĐẶT TOUR HOT:**
+                        - Nên đặt sớm để có giá tốt
+                        - Theo dõi các chương trình khuyến mãi
+                        - Chọn thời gian phù hợp với lịch trình
+                        """, userMessage, hotData.toString());
+
+                String aiResponse = model.chat(aiPrompt);
+                response.append(aiResponse);
+            } else {
+                response.append("Hiện tại chưa có tour hot nào. Vui lòng thử lại sau!");
+            }
+
+            return ChatResponse.builder()
+                    .message(response.toString())
+                    .sessionId("")
+                    .responseType("hot_tours")
+                    .build();
+        } catch (Exception e) {
+            log.error("Error getting hot tours: {}", e.getMessage(), e);
+            return ChatResponse.builder()
+                    .message("Xin lỗi, tôi gặp lỗi khi lấy tour hot. Vui lòng thử lại sau.")
+                    .sessionId("")
+                    .responseType("error")
+                    .build();
+        }
     }
 
     private ChatResponse getPromotionTours(String userMessage, ChatModel model) {
-        return ChatResponse.builder()
-                .message("Tôi đang tìm tour có khuyến mãi...")
-                .sessionId("")
-                .responseType("promotion_tours")
-                .build();
+        try {
+            // Lấy tất cả tour để tìm tour khuyến mãi
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<TourSummaryProjection> tours = tourRepository.findAllActiveToursSummary(pageable);
+
+            StringBuilder response = new StringBuilder("🎉 **TOUR KHUYẾN MÃI**\n\n");
+
+            if (tours.hasContent()) {
+                // Tạo dữ liệu tour khuyến mãi cho AI phân tích
+                StringBuilder promotionData = new StringBuilder();
+                for (TourSummaryProjection tour : tours.getContent()) {
+                    if (tour.getHasPromotion()) {
+                        promotionData.append("TOUR KHUYẾN MÃI: ").append(tour.getTitle()).append("\n");
+                        promotionData.append("  - Điểm đến: ").append(tour.getDestination()).append("\n");
+                        promotionData.append("  - Khởi hành: ").append(tour.getDeparture()).append("\n");
+                        promotionData.append("  - Danh mục: ").append(tour.getCategoryName()).append("\n");
+                        promotionData.append("  - Thời gian: ").append(tour.getDuration()).append(" ngày\n");
+                        promotionData.append("  - Giá gốc: ").append(String.format("%,.0f", tour.getAdultPrice()))
+                                .append(" VNĐ\n");
+                        promotionData.append("  - Giá trẻ em: ").append(String.format("%,.0f", tour.getChildPrice()))
+                                .append(" VNĐ\n");
+                        promotionData.append("  - Đánh giá: 4.5/5 (10 đánh giá)\n");
+                        promotionData.append("  - Nổi bật: ").append(tour.getFeatured() ? "Có" : "Không").append("\n");
+                        promotionData.append("  - Hot: ").append(tour.getIsHot() ? "Có" : "Không").append("\n\n");
+                    }
+                }
+
+                String aiPrompt = String.format(
+                        """
+                                Bạn là chuyên gia phân tích khuyến mãi du lịch. Dựa trên yêu cầu: "%s"
+
+                                Và danh sách tour khuyến mãi hiện có:
+                                %s
+
+                                Hãy phân tích và trả lời ngắn gọn:
+
+                                🎉 **TOUR KHUYẾN MÃI HẤP DẪN**
+
+                                Tôi đã tìm thấy %d tour đang có khuyến mãi hấp dẫn. Đây là cơ hội tuyệt vời để tiết kiệm chi phí:
+
+                                ⚡ **Lý do nên chọn tour khuyến mãi:**
+                                - Tiết kiệm chi phí đáng kể
+                                - Chất lượng dịch vụ không đổi
+                                - Cơ hội trải nghiệm tour cao cấp với giá tốt
+                                - Thời gian khuyến mãi có hạn
+
+                                🎯 **Tour khuyến mãi theo danh mục:**
+                                - Du lịch biển: Tour nghỉ dưỡng, resort cao cấp
+                                - Du lịch núi: Tour trekking, khám phá thiên nhiên
+                                - Du lịch văn hóa: Tour lịch sử, di sản thế giới
+
+                                💡 **Mẹo tận dụng khuyến mãi:**
+                                - Đặt tour sớm để giữ giá tốt
+                                - Kiểm tra điều kiện áp dụng
+                                - So sánh giá trước và sau khuyến mãi
+                                - Đặt tour theo nhóm để có ưu đãi thêm
+
+                                📞 **Tư vấn tour khuyến mãi:** 1900-xxxx
+                                - Cơ hội hiếm có, nên nắm bắt ngay
+                                - Thường kèm theo nhiều ưu đãi khác
+
+                                🚨 **LƯU Ý QUAN TRỌNG:**
+                                - Khuyến mãi có thời hạn, nên đặt sớm
+                                - Kiểm tra điều kiện áp dụng khuyến mãi
+                                - So sánh giá trước và sau khuyến mãi
+                                - Đặt tour ngay khi còn chỗ trống
+
+                                💡 **GỢI Ý ĐẶT TOUR KHUYẾN MÃI:**
+                                - Nên đặt ngay để không bỏ lỡ cơ hội
+                                - Chọn thời gian phù hợp với lịch trình
+                                - Đọc kỹ điều khoản và điều kiện
+                                - Liên hệ để được tư vấn chi tiết
+                                """,
+                        userMessage, promotionData.toString());
+
+                String aiResponse = model.chat(aiPrompt);
+                response.append(aiResponse);
+            } else {
+                response.append("Hiện tại chưa có tour khuyến mãi nào. Vui lòng thử lại sau!");
+            }
+
+            return ChatResponse.builder()
+                    .message(response.toString())
+                    .sessionId("")
+                    .responseType("promotion_tours")
+                    .build();
+        } catch (Exception e) {
+            log.error("Error getting promotion tours: {}", e.getMessage(), e);
+            return ChatResponse.builder()
+                    .message("Xin lỗi, tôi gặp lỗi khi lấy tour khuyến mãi. Vui lòng thử lại sau.")
+                    .sessionId("")
+                    .responseType("error")
+                    .build();
+        }
     }
 
     private ChatResponse getBookingHelp(String userMessage, ChatModel model) {
@@ -468,16 +871,97 @@ public class AIChatServiceImpl implements AIChatService {
     }
 
     private ChatResponse handleGeneralQuery(ChatRequest request, ChatModel model) {
-        return ChatResponse.builder()
-                .message("Tôi đang xử lý câu hỏi chung...")
-                .sessionId(request.getSessionId())
-                .responseType("general_query")
-                .build();
+        try {
+            // Lấy thông tin tour chi tiết để AI có thể tham khảo
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<TourSummaryProjection> tours = tourRepository.findAllActiveToursSummary(pageable);
+
+            StringBuilder tourInfo = new StringBuilder();
+            if (tours.hasContent()) {
+                tourInfo.append("DANH SÁCH TOUR HIỆN CÓ:\n\n");
+                for (TourSummaryProjection tour : tours.getContent()) {
+                    tourInfo.append("🏷️ ").append(tour.getTitle()).append("\n");
+                    tourInfo.append("   📍 Điểm đến: ").append(tour.getDestination()).append("\n");
+                    tourInfo.append("   🚀 Khởi hành: ").append(tour.getDeparture()).append("\n");
+                    tourInfo.append("   🏷️ Danh mục: ").append(tour.getCategoryName()).append("\n");
+                    tourInfo.append("   ⏰ Thời gian: ").append(tour.getDuration()).append(" ngày\n");
+                    tourInfo.append("   💰 Giá: ").append(String.format("%,.0f", tour.getAdultPrice()))
+                            .append(" VNĐ\n");
+                    tourInfo.append("   ⭐ Đánh giá: 4.5/5 (10 đánh giá)\n");
+                    tourInfo.append("   🏆 Nổi bật: ").append(tour.getFeatured() ? "Có" : "Không").append(" | Hot: ")
+                            .append(tour.getIsHot() ? "Có" : "Không").append(" | Khuyến mãi: ")
+                            .append(tour.getHasPromotion() ? "Có" : "Không").append("\n\n");
+                }
+            }
+
+            String prompt = String.format("""
+                    Bạn là AI trợ lý tư vấn tour du lịch chuyên nghiệp với 10+ năm kinh nghiệm.
+                    Bạn có kiến thức sâu rộng về du lịch Việt Nam và thế giới.
+
+                    THÔNG TIN TOUR HIỆN CÓ:
+                    %s
+
+                    CÂU HỎI CỦA KHÁCH HÀNG: "%s"
+
+                    Hãy trả lời một cách:
+                    - Thân thiện, nhiệt tình và chuyên nghiệp
+                    - Sử dụng emoji phù hợp để tạo cảm giác gần gũi
+                    - Đưa ra gợi ý cụ thể về tour dựa trên dữ liệu có sẵn
+                    - Phân tích và so sánh các tour phù hợp
+                    - Đưa ra lời khuyên về thời gian, ngân sách, và lựa chọn
+                    - Sử dụng thông tin thực tế từ danh sách tour
+                    - Trả lời bằng tiếng Việt tự nhiên, dễ hiểu
+
+                    Nếu câu hỏi không liên quan đến tour, hãy lịch sự chuyển hướng về chủ đề tour du lịch.
+                    """, tourInfo.toString(), request.getMessage());
+
+            String aiResponse = model.chat(prompt);
+
+            return ChatResponse.builder()
+                    .message(aiResponse)
+                    .sessionId(request.getSessionId())
+                    .responseType("general_query")
+                    .build();
+        } catch (Exception e) {
+            log.error("Error handling general query: {}", e.getMessage(), e);
+            return ChatResponse.builder()
+                    .message("Xin lỗi, tôi gặp lỗi khi xử lý câu hỏi. Vui lòng thử lại sau.")
+                    .sessionId(request.getSessionId())
+                    .responseType("error")
+                    .build();
+        }
     }
 
     @Override
     public String analyzeIntent(String userMessage, ChatModel model) {
-        // TODO: Implement AI-based intent analysis
-        return "general_query";
+        try {
+            String prompt = String.format("""
+                    Phân tích intent của câu hỏi sau và trả về một trong các giá trị sau:
+                    - search_tour: Tìm kiếm tour
+                    - check_schedule: Kiểm tra lịch trình
+                    - tour_details: Chi tiết tour
+                    - price_inquiry: Hỏi về giá
+                    - availability_check: Kiểm tra chỗ trống
+                    - category_tours: Tour theo danh mục
+                    - featured_tours: Tour nổi bật
+                    - hot_tours: Tour hot
+                    - promotion_tours: Tour khuyến mãi
+                    - booking_help: Hướng dẫn đặt tour
+                    - tour_comparison: So sánh tour
+                    - destination_info: Thông tin điểm đến
+                    - duration_tours: Tour theo thời gian
+                    - price_range_tours: Tour theo khoảng giá
+                    - general_query: Câu hỏi chung
+
+                    Câu hỏi: "%s"
+
+                    Chỉ trả về tên intent, không giải thích gì khác.
+                    """, userMessage);
+
+            return model.chat(prompt).trim();
+        } catch (Exception e) {
+            log.error("Error analyzing intent with AI: {}", e.getMessage(), e);
+            return "general_query";
+        }
     }
 }

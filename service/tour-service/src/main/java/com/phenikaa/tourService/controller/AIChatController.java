@@ -14,7 +14,6 @@ import jakarta.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/tour/chat")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AIChatController {
 
     private final AIChatService aiChatService;

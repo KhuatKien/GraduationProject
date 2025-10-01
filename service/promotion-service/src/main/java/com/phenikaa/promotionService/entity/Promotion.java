@@ -59,7 +59,7 @@ public class Promotion {
 
     @Column(name = "total_usage_limit", nullable = false)
     @Min(value = 1, message = "Total usage limit must be at least 1")
-    private Double totalUsageLimit;
+    private Integer totalUsageLimit;
 
     @Column(name = "used_count", nullable = false)
     @Min(value = 0, message = "Used count cannot be negative")
@@ -89,12 +89,4 @@ public class Promotion {
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<PromotionUsage> usages;
-
-    // @ManyToMany
-    // @JoinTable(
-    // name = "promotion_tours",
-    // joinColumns = @JoinColumn(name = "promotion_id"),
-    // inverseJoinColumns = @JoinColumn(name = "tour_id")
-    // )
-    // private List<Tour> applicableTours;
 }

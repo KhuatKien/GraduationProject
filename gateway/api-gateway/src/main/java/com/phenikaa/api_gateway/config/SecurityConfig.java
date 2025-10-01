@@ -39,12 +39,13 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() // cho phép tất cả các options
                         .pathMatchers("/api/auth/**").permitAll()
-                        .pathMatchers("/internal/users/**").permitAll()
+                        .pathMatchers("/api/internal/users/**").permitAll()
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/users/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/category/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/user/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .pathMatchers("/api/tour/chat/**").permitAll()
                         .pathMatchers("/api/booking/admin/**").hasAnyRole("ADMIN")
                         .pathMatchers("/api/booking/user/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/notifications/**").hasAnyRole("CUSTOMER", "ADMIN")
@@ -53,6 +54,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/promotions/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/reviews/user/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/reviews/admin/**").hasRole("ADMIN")
+                        .pathMatchers("/api/campaigns/**").hasRole("ADMIN")
 
                         .anyExchange().authenticated())
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

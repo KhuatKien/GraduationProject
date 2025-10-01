@@ -55,11 +55,19 @@ public class UserController {
             UpdateProfileRequest updateRequest = new UpdateProfileRequest();
             ProfileResponse current = currentUser.get();
 
-            // Chỉ cập nhật những field có giá trị mới
-            updateRequest.setEmail(email != null ? email : current.getEmail());
-            updateRequest.setPhoneNumber(phoneNumber != null ? phoneNumber : current.getPhoneNumber());
-            updateRequest.setFullName(fullName != null ? fullName : current.getFullName());
-            updateRequest.setAddress(address != null ? address : current.getAddress());
+            // Chỉ cập nhật những field có giá trị mới và khác với giá trị hiện tại
+            if (email != null && !email.equals(current.getEmail())) {
+                updateRequest.setEmail(email);
+            }
+            if (phoneNumber != null && !phoneNumber.equals(current.getPhoneNumber())) {
+                updateRequest.setPhoneNumber(phoneNumber);
+            }
+            if (fullName != null && !fullName.equals(current.getFullName())) {
+                updateRequest.setFullName(fullName);
+            }
+            if (address != null && !address.equals(current.getAddress())) {
+                updateRequest.setAddress(address);
+            }
 
             // Xử lý dateOfBirth
             if (dateOfBirth != null && !dateOfBirth.isEmpty()) {

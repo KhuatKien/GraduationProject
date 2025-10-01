@@ -29,7 +29,7 @@ spring:
                 pattern:
                   - /api/users/**
                   - /api/admin/**
-                  - /internal/users/**
+                  - /api/internal/users/**
 
         - id: tour-service
           uri: lb://tour-service
@@ -39,7 +39,7 @@ spring:
                 pattern:
                   - /api/tour/**
                   - /api/category/**
-                  - /internal/tour/**
+                  - /api/internal/tour/**
                   - /api/reviews/**
 
         - id: booking-service
@@ -73,6 +73,14 @@ spring:
               args:
                 pattern:
                   - /api/promotions/**
+
+        - id: campaign-service
+          uri: lb://campaign-service
+          predicates:
+            - name: Path
+              args:
+                pattern:
+                  - /api/campaigns/**
 
 eureka:
   client:

@@ -1,0 +1,23 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: campaign-service
+  profiles:
+    active: dev
+  security:
+    user:
+      name: none
+      password: none
+  config:
+    import: "configserver:" # Import configuration from the Config Server
+
+  cloud:
+    config:
+      uri: http://localhost:8080
+      fail-fast: true
+      retry:
+        max-attempts: 6 # Maximum number of retry attempts
+        multiplier: 1.2 # Multiplier for the retry interval
+        initial-interval: 1000 # Retry interval in milliseconds

@@ -16,7 +16,7 @@ spring:
             - notification-service
             - review-service
             - promotion-service
-            - chatbot-service
+            - campaign-service
 logging:
   level:
     org.springframework.cloud.config: DEBUG

@@ -39,10 +39,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User save(RegisterRequest registerRequest) {
-        Optional<User> userExist = userRepository.findByUserNameOrEmail(registerRequest.getUserName(),
-                registerRequest.getEmail());
-        if (userExist.isPresent()) {
-            throw new IllegalArgumentException("Username or email already exists");
+        // Kiểm tra username trùng
+        Optional<User> existingUserByUsername = userRepository.findByUserName(registerRequest.getUserName());
+        if (existingUserByUsername.isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
+        // Kiểm tra email trùng
+        Optional<User> existingUserByEmail = userRepository.findByEmail(registerRequest.getEmail());
+        if (existingUserByEmail.isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
         }
 
         User user = userMapper.toEntity(registerRequest);

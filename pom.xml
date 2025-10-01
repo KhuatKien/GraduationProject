@@ -27,8 +27,7 @@
 		<module>service/payment-service</module>
 		<module>service/promotion-service</module>
 		<module>service/notification-service</module>
-		<module>service/review-service</module>
-		<module>service/chatbot-service</module>
+		<module>service/campaign-service</module>
 		<module>common-lib</module>
 	</modules>
 
