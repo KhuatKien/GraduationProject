@@ -51,6 +51,13 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private BookingStatus status; // PENDING, CONFIRMED, CANCELLED, COMPLETED
 
+    // QR payment integration fields
+    @Column(name = "payment_reference")
+    private String paymentReference; // e.g., bookingCode included in transfer description
+
+    @Column(name = "qr_url", length = 1000)
+    private String qrUrl; // Generated Sepay VietQR URL for exact amount
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

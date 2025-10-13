@@ -32,7 +32,7 @@ public class AIChatServiceImpl implements AIChatService {
     private ChatModel getChatModel() {
         return GoogleAiGeminiChatModel.builder()
                 .apiKey(geminiApiKey)
-                .modelName("gemini-1.5-flash")
+                .modelName("gemini-2.0-flash")
                 .temperature(0.7)
                 .build();
     }

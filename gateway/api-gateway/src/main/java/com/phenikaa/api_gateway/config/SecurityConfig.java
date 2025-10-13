@@ -40,16 +40,20 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll() // cho phép tất cả các options
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/api/internal/users/**").permitAll()
+                        .pathMatchers("/api/category/user/**").permitAll()
+                        .pathMatchers("/api/tour/internal/**").permitAll()
+                        .pathMatchers("/api/tour/chat/**").permitAll()
+                        .pathMatchers("/ws/notifications/**").permitAll()
+                        .pathMatchers("/api/booking/webhook/**").permitAll() // Direct booking webhook
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/users/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/category/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/tour/user/**").hasAnyRole("CUSTOMER", "ADMIN")
-                        .pathMatchers("/api/tour/chat/**").permitAll()
                         .pathMatchers("/api/booking/admin/**").hasAnyRole("ADMIN")
                         .pathMatchers("/api/booking/user/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .pathMatchers("/api/booking/webhook/**").permitAll()
                         .pathMatchers("/api/notifications/**").hasAnyRole("CUSTOMER", "ADMIN")
-                        .pathMatchers("/ws/notifications/**").permitAll()
                         .pathMatchers("/api/promotions/user/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/promotions/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/reviews/user/**").hasAnyRole("CUSTOMER", "ADMIN")
@@ -70,10 +74,15 @@ public class SecurityConfig {
     @Order(-1)
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "https://*.ngrok-free.dev",
+                "https://*.ngrok.io",
+                "*" // Allow all origins for webhook
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(false); // Disable for webhook compatibility
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());

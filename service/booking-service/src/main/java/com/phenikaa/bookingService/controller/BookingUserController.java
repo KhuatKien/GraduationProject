@@ -36,7 +36,12 @@ public class BookingUserController {
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Đặt tour thành công",
-                    "data", booking));
+                    "data", Map.of(
+                            "bookingId", booking.getBookingId(),
+                            "bookingCode", booking.getBookingCode(),
+                            "status", booking.getStatus(),
+                            "finalAmount", booking.getFinalAmount(),
+                            "qrUrl", booking.getQrUrl())));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of(

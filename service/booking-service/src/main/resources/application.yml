@@ -30,3 +30,9 @@ feign:
         connect-timeout: 5000
         read-timeout: 10000
         logger-level: basic
+
+sepay:
+  account: "19394331899"
+  bank: "TPBank"
+  description: "Thanh toán đặt tour"
+  webhookSecret: "CHANGE_ME" # optional if Sepay signs webhook

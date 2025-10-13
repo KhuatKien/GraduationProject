@@ -49,6 +49,7 @@ spring:
               args:
                 pattern:
                   - /api/booking/**
+                  - /api/booking/webhook/**
 
         - id: notification-service
           uri: lb://notification-service

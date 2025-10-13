@@ -29,7 +29,7 @@ public class GatewayHeaderAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         // Bỏ qua filter nếu là API nội bộ
-        if (path.startsWith("/api/internal/users/")) {
+        if (path.startsWith("/api/internal/users/") || path.startsWith("/api/tour/internal/") || path.startsWith("/api/category/user/") || path.startsWith("/api/tour/chat/") || path.startsWith("/ws/notifications/") || path.startsWith("/api/booking/webhook/")) {
             filterChain.doFilter(request, response);
             return;
         }

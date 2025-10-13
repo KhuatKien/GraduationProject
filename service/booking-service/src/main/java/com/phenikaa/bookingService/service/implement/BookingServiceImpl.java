@@ -15,6 +15,7 @@ import com.phenikaa.bookingService.mapper.CreateBookingMapper;
 import com.phenikaa.bookingService.mapper.ViewBookingMapper;
 import com.phenikaa.bookingService.repository.BookingRepository;
 import com.phenikaa.bookingService.service.interfaces.BookingService;
+import com.phenikaa.bookingService.service.interfaces.QrPaymentService;
 import com.phenikaa.dto.response.GetInfoTour;
 import com.phenikaa.dto.response.ScheduleInfoResponse;
 import com.phenikaa.bookingService.dto.response.UserInfoResponse;
@@ -41,6 +42,7 @@ public class BookingServiceImpl implements BookingService {
     private final TourServiceClient tourServiceClient;
     private final UserServiceClient userServiceClient;
     private final PromotionServiceClient promotionServiceClient;
+    private final QrPaymentService qrPaymentService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -107,7 +109,12 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        // Lưu booking với tất cả thông tin (bao gồm promotion nếu có)
+        // Thiết lập tham chiếu thanh toán và QR URL trước khi trả về
+        booking.setPaymentReference(booking.getBookingCode());
+        String qrUrl = qrPaymentService.generateQrUrl(booking.getBookingCode(), booking.getFinalAmount());
+        booking.setQrUrl(qrUrl);
+
+        // Lưu booking với tất cả thông tin (bao gồm promotion và QR nếu có)
         Booking savedBooking = bookingRepository.save(booking);
 
         // Apply promotion code sau khi đã có bookingId (để tăng used_count và lưu usage

@@ -13,6 +13,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
         Booking findByBookingIdAndUserId(Integer bookingId, Integer userId);
 
+        java.util.Optional<Booking> findByBookingCode(String bookingCode);
+
         // Count methods for statistics
         Long countByStatus(BookingStatus status);
 

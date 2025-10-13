@@ -47,12 +47,6 @@ public class ReviewUserController {
         return ResponseEntity.ok(reviews);
     }
 
-    @GetMapping("/tour/{tourId}")
-    public ResponseEntity<List<ReviewResponse>> getTourReviews(@PathVariable Integer tourId) {
-        List<ReviewResponse> reviews = reviewService.getTourReviews(tourId);
-        return ResponseEntity.ok(reviews);
-    }
-
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> getReviewById(@PathVariable Integer reviewId) {
         try {
@@ -61,12 +55,6 @@ public class ReviewUserController {
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @GetMapping("/tour/{tourId}/summary")
-    public ResponseEntity<TourReviewSummary> getTourReviewSummary(@PathVariable Integer tourId) {
-        TourReviewSummary summary = reviewService.getTourReviewSummary(tourId);
-        return ResponseEntity.ok(summary);
     }
 
     // Statistics endpoints - public access

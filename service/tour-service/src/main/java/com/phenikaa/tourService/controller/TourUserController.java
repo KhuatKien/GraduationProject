@@ -27,21 +27,6 @@ public class TourUserController {
     private final TourService tourService;
     private final ScheduleService scheduleService;
 
-    @GetMapping("/getAllTours")
-    public ResponseEntity<Page<ViewTourResponse>> getAllTours(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<ViewTourResponse> tours = tourService.getAllTours(pageable);
-        return ResponseEntity.ok(tours);
-    }
-
-    @GetMapping("/{tourId}")
-    public ResponseEntity<ViewTourResponse> viewTour(@PathVariable("tourId") Integer tourId) {
-        ViewTourResponse tour = tourService.viewTour(tourId);
-        return ResponseEntity.ok(tour);
-    }
-
     @GetMapping("/getAllSchedules/{tourId}")
     public ResponseEntity<List<ViewTourScheduleResponse>> getAllSchedules(@PathVariable("tourId") Integer tourId) {
         List<ViewTourScheduleResponse> schedules = scheduleService.getAllScheduleByTourId(tourId);
@@ -102,16 +87,6 @@ public class TourUserController {
         Pageable pageable = PageRequest.of(page - 1, size, sort);
         Page<TourSummaryProjection> tours = tourService.getAllActiveToursSummary(pageable);
 
-        return ResponseEntity.ok(tours);
-    }
-
-    @PostMapping("/search/dynamic")
-    public ResponseEntity<Page<ViewTourResponse>> searchToursDynamic(
-            @RequestBody SearchTourCriteria criteria,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<ViewTourResponse> tours = tourService.searchToursBySpecification(criteria, pageable);
         return ResponseEntity.ok(tours);
     }
 
