@@ -50,20 +50,15 @@ public class CampaignServiceImpl implements CampaignService {
                 .updatedBy(userId.toString())
                 .build();
 
-        // Set target categories with proper campaign reference
-        List<CampaignCategory> categories = convertStringListToCampaignCategories(request.getTargetCategories(),
-                campaign);
-        campaign.setTargetCategories(categories);
-
         // Save campaign first to get ID
         Campaign savedCampaign = campaignRepository.save(campaign);
         log.info("Campaign saved with ID: {}", savedCampaign.getId());
 
-        // Now update categories with proper campaign reference and save again
+        // Set target categories with proper campaign reference after getting ID
         if (request.getTargetCategories() != null && !request.getTargetCategories().isEmpty()) {
-            List<CampaignCategory> updatedCategories = convertStringListToCampaignCategories(
+            List<CampaignCategory> categories = convertStringListToCampaignCategories(
                     request.getTargetCategories(), savedCampaign);
-            savedCampaign.setTargetCategories(updatedCategories);
+            savedCampaign.setTargetCategories(categories);
             savedCampaign = campaignRepository.save(savedCampaign);
             log.info("Campaign updated with {} categories: {}",
                     savedCampaign.getTargetCategories().size(),
@@ -521,6 +516,39 @@ public class CampaignServiceImpl implements CampaignService {
 
         log.info("Updated {} campaigns", updatedCount);
         return updatedCount;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Double calculateCampaignDiscount(String categoryName, Double originalPrice) {
+        log.info("Calculating campaign discount for category: {} with original price: {}", categoryName, originalPrice);
+
+        // Lấy tất cả campaign active cho category này
+        List<Campaign> activeCampaigns = campaignRepository.findByTargetCategory(categoryName)
+                .stream()
+                .filter(campaign -> campaign.getIsActive() &&
+                        campaign.getStatus() == CampaignStatus.ACTIVE &&
+                        campaign.getStartDate().isBefore(Instant.now()) &&
+                        campaign.getEndDate().isAfter(Instant.now()))
+                .collect(Collectors.toList());
+
+        if (activeCampaigns.isEmpty()) {
+            log.info("No active campaigns found for category: {}", categoryName);
+            return 0.0;
+        }
+
+        // Tính discount từ campaign có discount percentage cao nhất
+        Double maxDiscountPercentage = activeCampaigns.stream()
+                .mapToDouble(Campaign::getDiscountPercentage)
+                .max()
+                .orElse(0.0);
+
+        Double discountAmount = originalPrice * (maxDiscountPercentage / 100.0);
+
+        log.info("Found {} active campaigns for category: {}, max discount: {}%, discount amount: {}",
+                activeCampaigns.size(), categoryName, maxDiscountPercentage, discountAmount);
+
+        return discountAmount;
     }
 
     /**

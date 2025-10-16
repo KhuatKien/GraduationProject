@@ -251,4 +251,14 @@ public class CampaignController {
             return ResponseEntity.badRequest().body("Error updating campaign statuses: " + e.getMessage());
         }
     }
+
+    @PostMapping("/calculate-discount")
+    public ResponseEntity<Double> calculateCampaignDiscount(
+            @RequestParam("categoryName") String categoryName,
+            @RequestParam("originalPrice") Double originalPrice) {
+        log.info("Calculating campaign discount for category: {} with price: {}", categoryName, originalPrice);
+
+        Double discountAmount = campaignService.calculateCampaignDiscount(categoryName, originalPrice);
+        return ResponseEntity.ok(discountAmount);
+    }
 }

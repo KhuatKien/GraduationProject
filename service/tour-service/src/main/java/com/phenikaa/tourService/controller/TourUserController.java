@@ -63,7 +63,7 @@ public class TourUserController {
 
     @PutMapping("/updateAvailableSlot/{scheduleId}")
     public ResponseEntity<?> updateAvailableSlot(@PathVariable("scheduleId") Integer scheduleId,
-            @RequestParam("availableSlots") Integer availableSlots) {
+                                                 @RequestParam("availableSlots") Integer availableSlots) {
         scheduleService.updateSchedule(scheduleId, availableSlots);
         return ResponseEntity.ok("Update available slots successfully");
     }
@@ -93,6 +93,22 @@ public class TourUserController {
     @GetMapping("/AiChat")
     public ResponseEntity<String> aiChatRedirect() {
         return ResponseEntity.ok("AI Chat service is available at /api/tour/chat/");
+    }
+
+    // ========== CAMPAIGN INTEGRATION ENDPOINTS ==========
+
+    @GetMapping("/{tourId}/price-with-campaign")
+    public ResponseEntity<Double> getTourPriceWithCampaign(
+            @PathVariable Integer tourId,
+            @RequestParam(defaultValue = "adult") String priceType) {
+        Double price = tourService.calculateTourPriceWithCampaign(tourId, priceType);
+        return ResponseEntity.ok(price);
+    }
+
+    @GetMapping("/{tourId}/active-campaigns")
+    public ResponseEntity<List<Object>> getActiveCampaignsForTour(@PathVariable Integer tourId) {
+        List<Object> campaigns = tourService.getActiveCampaignsForTour(tourId);
+        return ResponseEntity.ok(campaigns);
     }
 
 }

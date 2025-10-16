@@ -18,7 +18,7 @@ public interface TourService {
     Page<ViewTourResponse> getAllTours(Pageable pageable);
 
     Page<ViewTourResponse> searchToursByKeywordAndFilterWithPagination(String keyword, String filterBy,
-            Pageable pageable);
+                                                                       Pageable pageable);
 
     Page<ViewTourResponse> searchToursByQbe(SearchTourCriteria criteria, Pageable pageable);
 
@@ -39,4 +39,9 @@ public interface TourService {
     Page<TourSummaryProjection> getAllActiveToursSummary(Pageable pageable);
 
     Page<TourSummaryProjection> getAllActiveToursTimeBased(int page);
+
+    // Campaign Integration Methods
+    Double calculateTourPriceWithCampaign(Integer tourId, String priceType); // "adult" or "child"
+
+    List<Object> getActiveCampaignsForTour(Integer tourId);
 }

@@ -41,4 +41,11 @@ public class ViewTourResponse {
     private List<ViewTourImageResponse> images;
     private List<ViewTourItineraryResponse> itineraries;
     private List<ViewTourScheduleResponse> schedules;
+
+    // Campaign pricing metadata (optional)
+    private Double originalAdultPrice;
+    private Double originalChildPrice;
+    private Double adultDiscount;
+    private Double childDiscount;
+    private Boolean hasCampaignDiscount;
 }

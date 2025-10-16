@@ -37,6 +37,69 @@ public class AIChatServiceImpl implements AIChatService {
                 .build();
     }
 
+    /**
+     * Tối ưu hóa độ dài câu trả lời AI
+     * 
+     * @param response Câu trả lời gốc
+     * @return Câu trả lời đã được tối ưu
+     */
+    private String optimizeResponseLength(String response) {
+        if (response == null || response.length() <= 200) {
+            return response;
+        }
+
+        // Cắt ngắn câu trả lời nếu quá dài
+        String[] sentences = response.split("[.!?]");
+        StringBuilder optimized = new StringBuilder();
+        int charCount = 0;
+        int maxLength = 200; // Giới hạn 200 ký tự
+
+        for (String sentence : sentences) {
+            if (charCount + sentence.length() + 1 <= maxLength) {
+                if (optimized.length() > 0) {
+                    optimized.append(". ");
+                }
+                optimized.append(sentence.trim());
+                charCount += sentence.length() + 2;
+            } else {
+                break;
+            }
+        }
+
+        // Thêm dấu chấm cuối nếu cần
+        if (optimized.length() > 0 && !optimized.toString().endsWith(".")) {
+            optimized.append(".");
+        }
+
+        return optimized.toString();
+    }
+
+    /**
+     * Lấy template câu trả lời nhanh cho các câu hỏi phổ biến
+     * 
+     * @param intent      Loại câu hỏi
+     * @param userMessage Tin nhắn của user
+     * @return Template câu trả lời
+     */
+    private String getQuickResponseTemplate(String intent, String userMessage) {
+        switch (intent) {
+            case "general_help":
+                return "🤖 **Xin chào! Tôi là AI Assistant**\n\nTôi có thể giúp bạn:\n\n🔍 **Tìm tour phù hợp** - Theo ngân sách, thời gian\n🏷️ **Tour khuyến mãi** - Giá tốt, ưu đãi\n👨‍👩‍👧‍👦 **Tour gia đình** - Phù hợp mọi lứa tuổi\n\n💡 **Hỏi tôi:** \"Tour biển 3 ngày\", \"Ngân sách 5 triệu\"";
+
+            case "price_inquiry":
+                return "💰 **Giá Tour Phổ Biến**\n\n🏔️ **Núi:** Đà Lạt 3N2Đ - 2.8tr | Sapa 2N1Đ - 2.5tr\n🏖️ **Biển:** Nha Trang 3N2Đ - 3.5tr | Phú Quốc 4N3Đ - 5.2tr\n🏛️ **Văn hóa:** Hội An 2N1Đ - 2.2tr | Huế 2N1Đ - 2.8tr\n\n💡 Bạn muốn tour nào?";
+
+            case "hot_tours":
+                return "🔥 **Tour Hot Nhất**\n\n🏖️ **Nha Trang 3N2Đ** - 3.5tr | Lặn san hô, Vinpearl\n🏔️ **Đà Lạt 4N3Đ** - 3.2tr | Langbiang, Cầu Vàng\n🏝️ **Phú Quốc 4N3Đ** - 5.2tr | Resort 5 sao, bãi Sao\n\n💡 Bạn muốn xem chi tiết tour nào?";
+
+            case "promotion_tours":
+                return "🏷️ **Tour Khuyến Mãi**\n\n🔥 **Đà Lạt** - Giảm 30% | 4tr → 2.8tr\n🔥 **Phú Quốc** - Giảm 25% | 6tr → 4.5tr\n🔥 **Nha Trang** - Giảm 20% | 4.5tr → 3.6tr\n\n💡 Bạn muốn đặt tour nào?";
+
+            default:
+                return null; // Sử dụng AI cho các trường hợp khác
+        }
+    }
+
     @Override
     public ChatResponse getSuitableTour(String userMessage, String specialization) {
         return null;
@@ -45,36 +108,17 @@ public class AIChatServiceImpl implements AIChatService {
     @Override
     public ChatResponse getGeneralHelp() {
         String helpMessage = """
-                **XIN CHÀO! TÔI LÀ AI TRỢ LÝ TƯ VẤN BOOKING TOUR**
+                🤖 **Xin chào! Tôi là AI Assistant**
 
-                Tôi được thiết kế đặc biệt để hỗ trợ khách hàng trong quá trình đặt tour du lịch. Dưới đây là những gì tôi có thể giúp bạn:
+                Tôi có thể giúp bạn:
 
-                **1. TÌM KIẾM TOUR PHÙ HỢP**
-                   Phân tích sở thích và ngân sách của bạn
-                   Gợi ý tour theo danh mục (Du lịch biển, Du lịch núi, Du lịch văn hóa, Du lịch thành phố, Du lịch sinh thái, Du lịch ẩm thực, Du lịch tâm linh, Du lịch gia đình, Du lịch cao cấp, Du lịch tiết kiệm)
-                   Cung cấp thông tin chi tiết về tour (title, description, highlights)
-                   Đề xuất tour theo điểm khởi hành và điểm đến
-                   Đánh giá mức độ phổ biến (featured, isHot, hasPromotion)
-                   Dự đoán trải nghiệm dựa trên duration và itinerary
+                🔍 **Tìm tour phù hợp** - Theo ngân sách, thời gian, điểm đến
+                📅 **Kiểm tra lịch trình** - Chỗ trống, giá cả, thông tin tour
+                🏷️ **Tour khuyến mãi** - Giá tốt, ưu đãi đặc biệt
+                👨‍👩‍👧‍👦 **Tour gia đình** - Phù hợp mọi lứa tuổi
 
-                   **Ví dụ câu hỏi:**
-                   - "Tôi muốn đi tour 3 ngày 2 đêm"
-                   - "Gợi ý tour quốc tế cho gia đình có trẻ em"
-                   - "Tôi thích tour adventure, có tour nào phù hợp?"
-                   - "Tour nào đang có khuyến mãi?"
-
-                **2. KIỂM TRA LỊCH TRÌNH VÀ CHỖ TRỐNG**
-                   Xem lịch khởi hành và trở về (departureDate, returnDate)
-                   Kiểm tra số chỗ còn trống (availableSlots)
-                   Thông tin chi tiết về giá người lớn và trẻ em (adultPrice, childPrice)
-                   Cập nhật trạng thái tour (ACTIVE, INACTIVE, FULL, CANCELLED)
-                   Kiểm tra trạng thái lịch trình (AVAILABLE, FULL, CANCELLED)
-
-                   **Ví dụ câu hỏi:**
-                   - "Tour Hạ Long ngày 15/12 còn chỗ không?"
-                   - "Lịch trình tour Sapa cuối tuần có gì?"
-                   - "Tour nào đang FULL hoặc CANCELLED?"
-                   - "Giá tour này bao nhiêu cho người lớn và trẻ em?""";
+                💡 **Hỏi tôi:** "Tour biển 3 ngày", "Ngân sách 5 triệu", "Tour gia đình"
+                """;
         return ChatResponse.builder()
                 .message(helpMessage)
                 .sessionId("")
@@ -93,6 +137,16 @@ public class AIChatServiceImpl implements AIChatService {
             if (intent == null) {
                 // Nếu không xác định được bằng logic đơn giản, dùng AI
                 intent = analyzeIntent(userMessage, model);
+            }
+
+            // Kiểm tra template nhanh trước
+            String quickTemplate = getQuickResponseTemplate(intent, userMessage);
+            if (quickTemplate != null) {
+                return ChatResponse.builder()
+                        .message(quickTemplate)
+                        .sessionId(request.getSessionId())
+                        .responseType(intent)
+                        .build();
             }
 
             switch (intent) {
@@ -265,29 +319,22 @@ public class AIChatServiceImpl implements AIChatService {
                 }
 
                 String aiPrompt = String.format("""
-                        Bạn là chuyên gia tư vấn tour du lịch. Dựa trên yêu cầu của khách hàng: "%s"
+                        Tư vấn tour NGẮN GỌN cho: "%s"
 
-                        Và danh sách tour có sẵn:
-                        %s
+                        TOUR CÓ SẴN: %s
 
-                        Hãy phân tích và chọn 4-6 tour phù hợp nhất, sắp xếp theo độ phù hợp giảm dần.
-                        Trả lời ngắn gọn và thân thiện:
+                        QUY TẮC:
+                        - Chọn 3-4 tour phù hợp nhất
+                        - Mỗi tour: tên, giá, thời gian (1 dòng)
+                        - Tổng cộng tối đa 4 câu
+                        - Kết thúc: "Bạn muốn xem chi tiết tour nào?"
 
-                        🎯 **TÌM KIẾM TOUR PHÙ HỢP**
-
-                        Tôi đã tìm thấy %d tour phù hợp với yêu cầu của bạn. Dưới đây là các tour được đề xuất:
-
-                        💡 **Gợi ý chọn tour:**
-                        - Xem xét ngân sách và thời gian phù hợp
-                        - Kiểm tra lịch trình và chỗ trống
-                        - Đọc đánh giá từ khách hàng trước
-                        - Liên hệ để được tư vấn chi tiết
-
-                        📞 **Hỗ trợ đặt tour:** 1900-xxxx
-                        """, userMessage, tourData.toString(), Math.min(tours.getContent().size(), 6));
+                        Ví dụ: "🏖️ Nha Trang 3N2Đ - 3.5tr | 🏔️ Đà Lạt 4N3Đ - 2.8tr | 🏝️ Phú Quốc 4N3Đ - 5.2tr"
+                        """, userMessage, tourData.toString());
 
                 String aiResponse = model.chat(aiPrompt);
-                response.append(aiResponse);
+                String optimizedResponse = optimizeResponseLength(aiResponse);
+                response.append(optimizedResponse);
             } else {
                 response.append("Hiện tại chưa có tour nào phù hợp. Vui lòng thử lại sau!");
             }
@@ -894,31 +941,32 @@ public class AIChatServiceImpl implements AIChatService {
                 }
             }
 
-            String prompt = String.format("""
-                    Bạn là AI trợ lý tư vấn tour du lịch chuyên nghiệp với 10+ năm kinh nghiệm.
-                    Bạn có kiến thức sâu rộng về du lịch Việt Nam và thế giới.
+            String prompt = String.format(
+                    """
+                            Bạn là AI trợ lý tư vấn tour du lịch. Trả lời NGẮN GỌN, ĐÚNG TRỌNG TÂM.
 
-                    THÔNG TIN TOUR HIỆN CÓ:
-                    %s
+                            THÔNG TIN TOUR: %s
 
-                    CÂU HỎI CỦA KHÁCH HÀNG: "%s"
+                            CÂU HỎI: "%s"
 
-                    Hãy trả lời một cách:
-                    - Thân thiện, nhiệt tình và chuyên nghiệp
-                    - Sử dụng emoji phù hợp để tạo cảm giác gần gũi
-                    - Đưa ra gợi ý cụ thể về tour dựa trên dữ liệu có sẵn
-                    - Phân tích và so sánh các tour phù hợp
-                    - Đưa ra lời khuyên về thời gian, ngân sách, và lựa chọn
-                    - Sử dụng thông tin thực tế từ danh sách tour
-                    - Trả lời bằng tiếng Việt tự nhiên, dễ hiểu
+                            QUY TẮC TRẢ LỜI:
+                            - Tối đa 3-4 câu
+                            - Dùng emoji phù hợp (1-2 emoji)
+                            - Gợi ý tour cụ thể từ danh sách
+                            - Nêu giá và thời gian chính
+                            - Kết thúc bằng call-to-action ngắn
 
-                    Nếu câu hỏi không liên quan đến tour, hãy lịch sự chuyển hướng về chủ đề tour du lịch.
-                    """, tourInfo.toString(), request.getMessage());
+                            Ví dụ: "🏖️ Tôi gợi ý tour Nha Trang 3N2Đ - 3.5 triệu. Bao gồm Vinpearl, lặn san hô. Bạn có muốn xem chi tiết không?"
+
+                            Nếu không liên quan tour: "Tôi chỉ tư vấn tour du lịch. Bạn cần tour gì?"
+                            """,
+                    tourInfo.toString(), request.getMessage());
 
             String aiResponse = model.chat(prompt);
+            String optimizedResponse = optimizeResponseLength(aiResponse);
 
             return ChatResponse.builder()
-                    .message(aiResponse)
+                    .message(optimizedResponse)
                     .sessionId(request.getSessionId())
                     .responseType("general_query")
                     .build();

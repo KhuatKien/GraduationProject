@@ -69,4 +69,7 @@ public interface CampaignService {
 
     // Scheduler Operations
     int updateExpiredCampaigns();
+
+    // Campaign Discount Calculation
+    Double calculateCampaignDiscount(String categoryName, Double originalPrice);
 }

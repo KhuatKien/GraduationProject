@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/reviews/user/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .pathMatchers("/api/reviews/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/campaigns/**").hasRole("ADMIN")
+                        .pathMatchers("/api/campaigns/calculate-discount/**").hasAnyRole("CUSTOMER", "ADMIN")
 
                         .anyExchange().authenticated())
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

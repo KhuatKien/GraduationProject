@@ -44,7 +44,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         return new GetInfoTour(
                 schedule.get().getAvailableSlots(),
                 schedule.get().getTour().getAdultPrice(),
-                schedule.get().getTour().getChildPrice());
+                schedule.get().getTour().getChildPrice(),
+                schedule.get().getTour().getCategory() != null ? schedule.get().getTour().getCategory().getName() : null);
     }
 
     @Override

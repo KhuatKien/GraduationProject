@@ -1,5 +1,6 @@
 package com.phenikaa.bookingService.service.implement;
 
+import com.phenikaa.bookingService.client.CampaignServiceClient;
 import com.phenikaa.bookingService.client.PromotionServiceClient;
 import com.phenikaa.bookingService.client.TourServiceClient;
 import com.phenikaa.bookingService.client.UserServiceClient;
@@ -42,6 +43,7 @@ public class BookingServiceImpl implements BookingService {
     private final TourServiceClient tourServiceClient;
     private final UserServiceClient userServiceClient;
     private final PromotionServiceClient promotionServiceClient;
+    private final CampaignServiceClient campaignServiceClient;
     private final QrPaymentService qrPaymentService;
 
     @Override
@@ -72,12 +74,39 @@ public class BookingServiceImpl implements BookingService {
         // Set default status
         booking.setStatus(BookingStatus.PENDING);
 
-        // Tính total amount
-        Double totalAmount = dto.getAdultCount() * request.getAdultPrice()
-                + dto.getChildCount() * request.getChildPrice();
+        // Tính total amount với campaign discount
+        Double adultPrice = request.getAdultPrice();
+        Double childPrice = request.getChildPrice();
+
+        // Tính campaign discount cho adult và child price (nếu có category)
+        try {
+            String categoryName = request.getCategoryName();
+            if (categoryName != null && !categoryName.isBlank()) {
+                ResponseEntity<Double> adultCampaignDiscount = campaignServiceClient.calculateCampaignDiscount(
+                        categoryName, adultPrice);
+                ResponseEntity<Double> childCampaignDiscount = campaignServiceClient.calculateCampaignDiscount(
+                        categoryName, childPrice);
+
+                Double adultDiscountAmount = (adultCampaignDiscount != null && adultCampaignDiscount.getBody() != null)
+                        ? adultCampaignDiscount.getBody() : 0.0;
+                Double childDiscountAmount = (childCampaignDiscount != null && childCampaignDiscount.getBody() != null)
+                        ? childCampaignDiscount.getBody() : 0.0;
+
+                // Giá sau campaign
+                adultPrice = Math.max(adultPrice - adultDiscountAmount, 0.0);
+                childPrice = Math.max(childPrice - childDiscountAmount, 0.0);
+            } else {
+                System.out.println("[Booking] categoryName is null/blank - skip campaign discount");
+            }
+        } catch (Exception e) {
+            System.err.println("[Booking] Error calculating campaign discount: " + e.getMessage());
+            // Tiếp tục với giá gốc nếu có lỗi
+        }
+
+        Double totalAmount = dto.getAdultCount() * adultPrice + dto.getChildCount() * childPrice;
         booking.setTotalAmount(totalAmount);
 
-        // Set default final amount (without promotion)
+        // Set default final amount (sau campaign, trước promotion)
         booking.setFinalAmount(totalAmount);
         booking.setDiscountAmount(0.0);
 
@@ -396,7 +425,7 @@ public class BookingServiceImpl implements BookingService {
         int nextNumber = 1; // Default to 1 if no bookings exist
 
         if (!lastBookingPage.isEmpty()) {
-            Booking lastBooking = lastBookingPage.getContent().get(0);
+            Booking lastBooking = lastBookingPage.getContent().getFirst();
             if (lastBooking.getBookingCode() != null) {
                 try {
                     // Extract number from booking code (e.g., "BK123" -> 123)

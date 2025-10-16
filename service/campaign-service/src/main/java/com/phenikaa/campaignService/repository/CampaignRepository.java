@@ -20,7 +20,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, Integer> {
     List<Campaign> findByIsActiveTrue();
 
     // Tìm campaign theo category
-    @Query("SELECT c FROM Campaign c WHERE :categoryName MEMBER OF c.targetCategories AND c.isActive = true")
+    @Query("SELECT DISTINCT c FROM Campaign c JOIN c.targetCategories cc WHERE cc.categoryName = :categoryName AND c.isActive = true")
     List<Campaign> findByTargetCategory(@Param("categoryName") String categoryName);
 
     // Tìm campaign đang chạy trong khoảng thời gian
@@ -33,7 +33,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, Integer> {
     // Tìm campaign theo khoảng thời gian
     @Query("SELECT c FROM Campaign c WHERE c.startDate >= :startDate AND c.endDate <= :endDate")
     List<Campaign> findByDateRange(@Param("startDate") Instant startDate,
-            @Param("endDate") Instant endDate);
+                                   @Param("endDate") Instant endDate);
 
     // Tìm campaign sắp hết hạn
     @Query("SELECT c FROM Campaign c WHERE c.endDate <= :thresholdTime AND c.status = 'ACTIVE'")

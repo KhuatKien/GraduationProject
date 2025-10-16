@@ -12,6 +12,8 @@ import com.phenikaa.tourService.repository.CategoryRepository;
 import com.phenikaa.tourService.repository.TourRepository;
 import com.phenikaa.tourService.service.interfaces.CloudinaryService;
 import com.phenikaa.tourService.service.interfaces.TourService;
+import com.phenikaa.tourService.client.CampaignServiceClient;
+import com.phenikaa.tourService.client.UserServiceClient;
 import com.phenikaa.tourService.specification.TourSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
@@ -19,16 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.time.Instant;
 import java.time.Duration;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +48,7 @@ public class TourServiceImpl implements TourService {
     private final ViewTourMapper viewTourMapper;
     private final CloudinaryService cloudinaryService;
     private final CategoryRepository categoryRepository;
+    private final CampaignServiceClient campaignServiceClient;
 
     @Override
     public List<ViewTourResponse> searchToursByKeywordAndFilter(String keyword, String filterBy) {
@@ -59,7 +60,7 @@ public class TourServiceImpl implements TourService {
     public Page<ViewTourResponse> getAllTours(Pageable pageable) {
         Page<Tour> tourPage = tourRepository.findAll(pageable);
 
-        // Map tours with additional statistics
+        // Map tours with additional statistics and campaign pricing
         List<ViewTourResponse> toursWithStats = tourPage.getContent().stream()
                 .map(tour -> {
                     // Get review statistics
@@ -72,6 +73,51 @@ public class TourServiceImpl implements TourService {
                     // Set additional statistics
                     response.setAverageRating(averageRating != null ? averageRating : 0.0);
                     response.setReviewCount(reviewCount);
+
+                    // Apply campaign pricing if available
+                    if (tour.getCategory() != null) {
+                        try {
+                            // Calculate campaign discount for adult price
+                            ResponseEntity<Double> adultDiscountResponse = campaignServiceClient
+                                    .calculateCampaignDiscount(
+                                            tour.getCategory().getName(), tour.getAdultPrice());
+
+                            if (adultDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                                    adultDiscountResponse.getBody() != null &&
+                                    adultDiscountResponse.getBody() > 0) {
+
+                                Double adultDiscount = adultDiscountResponse.getBody();
+                                Double discountedAdultPrice = Math.max(tour.getAdultPrice() - adultDiscount, 0.0);
+
+                                // Calculate campaign discount for child price
+                                ResponseEntity<Double> childDiscountResponse = campaignServiceClient
+                                        .calculateCampaignDiscount(
+                                                tour.getCategory().getName(), tour.getChildPrice());
+
+                                Double childDiscount = 0.0;
+                                Double discountedChildPrice = tour.getChildPrice();
+
+                                if (childDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                                        childDiscountResponse.getBody() != null) {
+                                    childDiscount = childDiscountResponse.getBody();
+                                    discountedChildPrice = Math.max(tour.getChildPrice() - childDiscount, 0.0);
+                                }
+
+                                // Update response with discounted prices and metadata
+                                response.setOriginalAdultPrice(tour.getAdultPrice());
+                                response.setOriginalChildPrice(tour.getChildPrice());
+                                response.setAdultPrice(discountedAdultPrice);
+                                response.setChildPrice(discountedChildPrice);
+                                response.setAdultDiscount(adultDiscount);
+                                response.setChildDiscount(childDiscount);
+                                response.setHasCampaignDiscount(true);
+                            }
+                        } catch (Exception e) {
+                            // Log error but continue with original prices
+                            System.err.println("Error calculating campaign discount for tour " + tour.getTourId() + ": "
+                                    + e.getMessage());
+                        }
+                    }
 
                     return response;
                 })
@@ -115,7 +161,8 @@ public class TourServiceImpl implements TourService {
         // Thực hiện search với Specification
         Page<Tour> tourPage = tourRepository.findAll(spec, pageable);
 
-        // Map tours with additional statistics (same as getAllTours)
+        // Map tours with additional statistics and campaign pricing (same as
+        // getAllTours)
         List<ViewTourResponse> toursWithStats = tourPage.getContent().stream()
                 .map(tour -> {
                     // Get review statistics
@@ -128,6 +175,56 @@ public class TourServiceImpl implements TourService {
                     // Set additional statistics
                     response.setAverageRating(averageRating != null ? averageRating : 0.0);
                     response.setReviewCount(reviewCount);
+
+                    // Initialize campaign pricing fields with default values
+                    response.setOriginalAdultPrice(tour.getAdultPrice());
+                    response.setOriginalChildPrice(tour.getChildPrice());
+                    response.setAdultDiscount(0.0);
+                    response.setChildDiscount(0.0);
+                    response.setHasCampaignDiscount(false);
+
+                    // Apply campaign pricing if available
+                    if (tour.getCategory() != null) {
+                        try {
+                            // Calculate campaign discount for adult price
+                            ResponseEntity<Double> adultDiscountResponse = campaignServiceClient
+                                    .calculateCampaignDiscount(
+                                            tour.getCategory().getName(), tour.getAdultPrice());
+
+                            if (adultDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                                    adultDiscountResponse.getBody() != null &&
+                                    adultDiscountResponse.getBody() > 0) {
+
+                                Double adultDiscount = adultDiscountResponse.getBody();
+                                Double discountedAdultPrice = Math.max(tour.getAdultPrice() - adultDiscount, 0.0);
+
+                                // Calculate campaign discount for child price
+                                ResponseEntity<Double> childDiscountResponse = campaignServiceClient
+                                        .calculateCampaignDiscount(
+                                                tour.getCategory().getName(), tour.getChildPrice());
+
+                                Double childDiscount = 0.0;
+                                Double discountedChildPrice = tour.getChildPrice();
+
+                                if (childDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                                        childDiscountResponse.getBody() != null) {
+                                    childDiscount = childDiscountResponse.getBody();
+                                    discountedChildPrice = Math.max(tour.getChildPrice() - childDiscount, 0.0);
+                                }
+
+                                // Update response with discounted prices and metadata
+                                response.setAdultPrice(discountedAdultPrice);
+                                response.setChildPrice(discountedChildPrice);
+                                response.setAdultDiscount(adultDiscount);
+                                response.setChildDiscount(childDiscount);
+                                response.setHasCampaignDiscount(true);
+                            }
+                        } catch (Exception e) {
+                            // Log error but continue with original prices
+                            System.err.println("Error calculating campaign discount for tour " + tour.getTourId() + ": "
+                                    + e.getMessage());
+                        }
+                    }
 
                     return response;
                 })
@@ -151,10 +248,78 @@ public class TourServiceImpl implements TourService {
         Example<Tour> example = Example.of(exampleTour, matcher);
 
         // Thực hiện search với Example
-        Page<Tour> tours = tourRepository.findAll(example, pageable);
+        Page<Tour> tourPage = tourRepository.findAll(example, pageable);
 
-        // Convert to DTO
-        return tours.map(viewTourMapper::toDto);
+        // Map tours with additional statistics and campaign pricing (same as
+        // getAllTours)
+        List<ViewTourResponse> toursWithStats = tourPage.getContent().stream()
+                .map(tour -> {
+                    // Get review statistics
+                    Double averageRating = tourRepository.getAverageRatingByTourId(tour.getTourId());
+                    Long reviewCount = tourRepository.countByTourId(tour.getTourId());
+
+                    // Map basic tour data
+                    ViewTourResponse response = viewTourMapper.toDto(tour);
+
+                    // Set additional statistics
+                    response.setAverageRating(averageRating != null ? averageRating : 0.0);
+                    response.setReviewCount(reviewCount);
+
+                    // Initialize campaign pricing fields with default values
+                    response.setOriginalAdultPrice(tour.getAdultPrice());
+                    response.setOriginalChildPrice(tour.getChildPrice());
+                    response.setAdultDiscount(0.0);
+                    response.setChildDiscount(0.0);
+                    response.setHasCampaignDiscount(false);
+
+                    // Apply campaign pricing if available
+                    if (tour.getCategory() != null) {
+                        try {
+                            // Calculate campaign discount for adult price
+                            ResponseEntity<Double> adultDiscountResponse = campaignServiceClient
+                                    .calculateCampaignDiscount(
+                                            tour.getCategory().getName(), tour.getAdultPrice());
+
+                            if (adultDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                                    adultDiscountResponse.getBody() != null &&
+                                    adultDiscountResponse.getBody() > 0) {
+
+                                Double adultDiscount = adultDiscountResponse.getBody();
+                                Double discountedAdultPrice = Math.max(tour.getAdultPrice() - adultDiscount, 0.0);
+
+                                // Calculate campaign discount for child price
+                                ResponseEntity<Double> childDiscountResponse = campaignServiceClient
+                                        .calculateCampaignDiscount(
+                                                tour.getCategory().getName(), tour.getChildPrice());
+
+                                Double childDiscount = 0.0;
+                                Double discountedChildPrice = tour.getChildPrice();
+
+                                if (childDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                                        childDiscountResponse.getBody() != null) {
+                                    childDiscount = childDiscountResponse.getBody();
+                                    discountedChildPrice = Math.max(tour.getChildPrice() - childDiscount, 0.0);
+                                }
+
+                                // Update response with discounted prices and metadata
+                                response.setAdultPrice(discountedAdultPrice);
+                                response.setChildPrice(discountedChildPrice);
+                                response.setAdultDiscount(adultDiscount);
+                                response.setChildDiscount(childDiscount);
+                                response.setHasCampaignDiscount(true);
+                            }
+                        } catch (Exception e) {
+                            // Log error but continue with original prices
+                            System.err.println("Error calculating campaign discount for tour " + tour.getTourId() + ": "
+                                    + e.getMessage());
+                        }
+                    }
+
+                    return response;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(toursWithStats, pageable, tourPage.getTotalElements());
     }
 
     private Tour createExampleTour(SearchTourCriteria criteria) {
@@ -370,7 +535,7 @@ public class TourServiceImpl implements TourService {
                 newSchedule.setReturnDate(scheduleDto.getReturnDate());
                 newSchedule.setStatus(scheduleDto.getStatus());
                 newSchedule.setAvailableSlots(scheduleDto.getAvailableSlots()); // Get from request instead of
-                                                                                // maxParticipants
+                // maxParticipants
                 newSchedule.setTour(existingTour);
                 updatedSchedules.add(newSchedule);
             }
@@ -434,7 +599,69 @@ public class TourServiceImpl implements TourService {
     public ViewTourResponse viewTour(Integer tourId) {
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
-        return viewTourMapper.toDto(tour);
+
+        // Map basic tour data
+        ViewTourResponse response = viewTourMapper.toDto(tour);
+
+        // Get review statistics
+        Double averageRating = tourRepository.getAverageRatingByTourId(tour.getTourId());
+        Long reviewCount = tourRepository.countByTourId(tour.getTourId());
+
+        // Set additional statistics
+        response.setAverageRating(averageRating != null ? averageRating : 0.0);
+        response.setReviewCount(reviewCount);
+
+        // Initialize campaign pricing fields with default values
+        response.setOriginalAdultPrice(tour.getAdultPrice());
+        response.setOriginalChildPrice(tour.getChildPrice());
+        response.setAdultDiscount(0.0);
+        response.setChildDiscount(0.0);
+        response.setHasCampaignDiscount(false);
+
+        // Apply campaign pricing if available
+        if (tour.getCategory() != null) {
+            try {
+                // Calculate campaign discount for adult price
+                ResponseEntity<Double> adultDiscountResponse = campaignServiceClient
+                        .calculateCampaignDiscount(
+                                tour.getCategory().getName(), tour.getAdultPrice());
+
+                if (adultDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                        adultDiscountResponse.getBody() != null &&
+                        adultDiscountResponse.getBody() > 0) {
+
+                    Double adultDiscount = adultDiscountResponse.getBody();
+                    Double discountedAdultPrice = Math.max(tour.getAdultPrice() - adultDiscount, 0.0);
+
+                    // Calculate campaign discount for child price
+                    ResponseEntity<Double> childDiscountResponse = campaignServiceClient
+                            .calculateCampaignDiscount(
+                                    tour.getCategory().getName(), tour.getChildPrice());
+
+                    Double childDiscount = 0.0;
+                    Double discountedChildPrice = tour.getChildPrice();
+
+                    if (childDiscountResponse.getStatusCode().is2xxSuccessful() &&
+                            childDiscountResponse.getBody() != null) {
+                        childDiscount = childDiscountResponse.getBody();
+                        discountedChildPrice = Math.max(tour.getChildPrice() - childDiscount, 0.0);
+                    }
+
+                    // Update response with discounted prices and metadata
+                    response.setAdultPrice(discountedAdultPrice);
+                    response.setChildPrice(discountedChildPrice);
+                    response.setAdultDiscount(adultDiscount);
+                    response.setChildDiscount(childDiscount);
+                    response.setHasCampaignDiscount(true);
+                }
+            } catch (Exception e) {
+                // Log error but continue with original prices
+                System.err.println("Error calculating campaign discount for tour " + tour.getTourId() + ": "
+                        + e.getMessage());
+            }
+        }
+
+        return response;
     }
 
     @Override
@@ -505,5 +732,61 @@ public class TourServiceImpl implements TourService {
         // Nếu có tour, tạo Page bình thường
         Pageable pageRequest = PageRequest.of(0, totalElements);
         return new PageImpl<>(allToursInTimeRange, pageRequest, totalElements);
+    }
+
+    // ========== CAMPAIGN INTEGRATION METHODS ==========
+
+    @Override
+    @Transactional(readOnly = true)
+    public Double calculateTourPriceWithCampaign(Integer tourId, String priceType) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
+
+        Double originalPrice = "adult".equalsIgnoreCase(priceType) ? tour.getAdultPrice() : tour.getChildPrice();
+
+        if (tour.getCategory() == null) {
+            return originalPrice;
+        }
+
+        try {
+            // Gọi campaign service để tính discount
+            ResponseEntity<Double> response = campaignServiceClient.calculateCampaignDiscount(
+                    tour.getCategory().getName(), originalPrice);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Double discountAmount = response.getBody();
+                Double finalPrice = originalPrice - discountAmount;
+                return Math.max(finalPrice, 0.0); // Đảm bảo giá không âm
+            }
+        } catch (Exception e) {
+            // Log error nhưng không throw exception để không ảnh hưởng đến flow chính
+            System.err.println("Error calculating campaign discount for tour " + tourId + ": " + e.getMessage());
+        }
+
+        return originalPrice;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Object> getActiveCampaignsForTour(Integer tourId) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new EntityNotFoundException("Tour not found with ID: " + tourId));
+
+        if (tour.getCategory() == null) {
+            return new ArrayList<>();
+        }
+
+        try {
+            ResponseEntity<List<Object>> response = campaignServiceClient.getCampaignsByCategory(
+                    tour.getCategory().getName());
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody();
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting active campaigns for tour " + tourId + ": " + e.getMessage());
+        }
+
+        return new ArrayList<>();
     }
 }
