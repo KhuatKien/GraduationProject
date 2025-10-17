@@ -80,7 +80,7 @@ public class TourServiceImpl implements TourService {
                             // Calculate campaign discount for adult price
                             ResponseEntity<Double> adultDiscountResponse = campaignServiceClient
                                     .calculateCampaignDiscount(
-                                            tour.getCategory().getName(), tour.getAdultPrice());
+                                    tour.getCategory().getName(), tour.getAdultPrice());
 
                             if (adultDiscountResponse.getStatusCode().is2xxSuccessful() &&
                                     adultDiscountResponse.getBody() != null &&
@@ -92,7 +92,7 @@ public class TourServiceImpl implements TourService {
                                 // Calculate campaign discount for child price
                                 ResponseEntity<Double> childDiscountResponse = campaignServiceClient
                                         .calculateCampaignDiscount(
-                                                tour.getCategory().getName(), tour.getChildPrice());
+                                        tour.getCategory().getName(), tour.getChildPrice());
 
                                 Double childDiscount = 0.0;
                                 Double discountedChildPrice = tour.getChildPrice();
@@ -128,7 +128,7 @@ public class TourServiceImpl implements TourService {
 
     @Override
     public Page<ViewTourResponse> searchToursByKeywordAndFilterWithPagination(String keyword, String filterBy,
-            Pageable pageable) {
+                                                                              Pageable pageable) {
         Page<Tour> tourPage = tourRepository.searchByKeywordAndFilterWithPagination(keyword, filterBy, pageable);
         return tourPage.map(viewTourMapper::toDto);
     }
