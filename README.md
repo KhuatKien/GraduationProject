@@ -23,7 +23,3 @@ A microservices platform built with Java \- Spring Boot and Maven. The repositor
 - Docker and Docker Compose (for running full stack)
 - Git
 - (Optional) WSL2 if you need to run `setup-all-services-https.sh`
-
-## Quick start (Windows)
-
-1. Clone repository:
